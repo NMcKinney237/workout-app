@@ -1172,8 +1172,8 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       <div class="card">
         <h2>During a workout</h2>
         <ul>
-          <li>Voice cues read out each exercise, "next up" during rest, and the halfway point on long holds. Tap the speaker to mute.</li>
-          <li>Timed holds give you a 3-second countdown to get into position, with beeps on the last 3 seconds.</li>
+          <li>Sound is off by default. Tap the speaker during a workout to turn on voice cues (exercise names, "next up" during rest, halfway on long holds) and countdown beeps. The phone vibrates either way.</li>
+          <li>Timed holds give you a 3-second countdown to get into position.</li>
           <li>Gym lifts have reps and weight fields, pre-filled from your last session. "Log set" saves it and starts the rest timer.</li>
           <li>Use the list button to jump to any exercise. Rest can be shortened or extended by 15 seconds.</li>
         </ul>
@@ -1209,11 +1209,12 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   // ---------- Player ----------
   // Flow modeled on Feeel (voice + countdown cues, next-up during rest) and wger/Liftosaur (set logging, rest +/-15s, jump list, summary).
   const P = document.getElementById("player");
-  const LKEY = "posture-reset-lifts-v1", PKEY = "posture-reset-prefs-v1";
+  const LKEY = "posture-reset-lifts-v1", PKEY = "posture-reset-prefs-v2";
   function loadJSON(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   let lifts = loadJSON(LKEY, {});
-  const prefs = Object.assign({ voice: true, unit: "lb" }, loadJSON(PKEY, {}));
+  // Sound (voice + beeps) is off until the user turns it on. Older saved prefs only carry over the weight unit.
+  const prefs = Object.assign({ sound: false, unit: (loadJSON("posture-reset-prefs-v1", {}).unit) || "lb" }, loadJSON(PKEY, {}));
   let steps = [], idx = 0, routine = null, wakeLock = null, audio = null, clock = null, session = null, hold = "idle", closeArmed = 0;
 
   const isLogged = st => st.kind === "ex" && st.unit === "reps" && EX[st.id].tags.includes("gym");
@@ -1238,6 +1239,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 
   // ---- feedback: beeps, vibration, voice ----
   function beep(freq, dur) {
+    if (!prefs.sound) return;
     try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
       if (audio.state === "suspended") audio.resume();
@@ -1251,7 +1253,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   }
   function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
   function speak(text) {
-    if (!prefs.voice) return;
+    if (!prefs.sound) return;
     try { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.03; s.speak(u); } catch (e) {}
   }
   async function lockScreen() { try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) { wakeLock = null; } }
@@ -1306,7 +1308,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       <div class="p-top">
         <button class="x" data-act="close" aria-label="End workout">${icon.x}</button>
         <div class="t"><div id="p-title">${esc(routine.name)}</div><small>${st ? `Exercise ${st.item + 1} of ${n}` : ""}</small></div>
-        <button class="x" data-act="voice" aria-pressed="${prefs.voice}" aria-label="Voice cues ${prefs.voice ? "on" : "off"}">${prefs.voice ? icons2.voiceOn : icons2.voiceOff}</button>
+        <button class="x" data-act="voice" aria-pressed="${prefs.sound}" aria-label="Sound ${prefs.sound ? "on" : "off"}">${prefs.sound ? icons2.voiceOn : icons2.voiceOff}</button>
         <button class="x" data-act="list" aria-label="All exercises in this routine">${icons2.list}</button>
       </div>
       <div class="progress" aria-hidden="true"><i style="width:${Math.round((idx / steps.length) * 100)}%"></i></div>`;
@@ -1486,10 +1488,10 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
         if (idx > 0 && idx < steps.length && Date.now() - closeArmed > 2500) { closeArmed = Date.now(); return toast("Tap X again to end the workout"); }
         return closePlayer();
       case "voice":
-        prefs.voice = !prefs.voice; saveJSON(PKEY, prefs);
-        if (!prefs.voice) { try { speechSynthesis.cancel(); } catch (err) {} }
-        b.setAttribute("aria-pressed", String(prefs.voice)); b.setAttribute("aria-label", "Voice cues " + (prefs.voice ? "on" : "off"));
-        b.innerHTML = prefs.voice ? icons2.voiceOn : icons2.voiceOff; return;
+        prefs.sound = !prefs.sound; saveJSON(PKEY, prefs);
+        if (!prefs.sound) { try { speechSynthesis.cancel(); } catch (err) {} }
+        b.setAttribute("aria-pressed", String(prefs.sound)); b.setAttribute("aria-label", "Sound " + (prefs.sound ? "on" : "off")); if (prefs.sound) beep(660, 0.08);
+        b.innerHTML = prefs.sound ? icons2.voiceOn : icons2.voiceOff; return;
       case "list": return renderSheet();
       case "sheet-close": { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); return; }
       case "prev": clockStop(); idx = Math.max(0, idx - 1); if (steps[idx].kind === "rest" && idx > 0) idx--; return renderStep();
