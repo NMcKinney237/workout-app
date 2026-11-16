@@ -21,6 +21,8 @@
 html, body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+button, a, label, summary, .dial { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 /* Layout: single-column phone app. Bottom tab bar, card list of routines, full-screen guided player sheet. */
 :root {
   --bg: #EEF2F0;
@@ -881,26 +883,27 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   function videoControl(id) {
     const v = VIDEO[id];
     if (!v) return `<a href="${videoURL(EX[id].name)}" target="_blank" rel="noopener">Find videos</a>`;
-    return `<button class="vid-btn" data-video="${id}" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Watch video</button>`;
+    return `<button class="vid-btn" data-video="${id}" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Show video</button>`;
   }
   function toggleVideo(btn) {
     const id = btn.dataset.video, v = VIDEO[id], fig = btn.closest(".media"), slot = fig.querySelector(".video-slot");
-    if (slot.childElementCount) { slot.innerHTML = ""; slot.hidden = true; btn.setAttribute("aria-expanded", "false"); btn.lastChild.textContent = "Watch video"; return; }
+    if (slot.childElementCount) { slot.innerHTML = ""; slot.hidden = true; btn.setAttribute("aria-expanded", "false"); btn.lastChild.textContent = "Show video"; return; }
     slot.hidden = false; btn.setAttribute("aria-expanded", "true"); btn.lastChild.textContent = "Hide video";
     if (!navigator.onLine) { slot.innerHTML = '<p class="vid-off">Videos need a connection. Photos and cues work offline.</p>'; return; }
     slot.className = "video-slot" + (v.short ? " short" : "");
-    slot.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?autoplay=1&playsinline=1&rel=0" title="${esc(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+    slot.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?playsinline=1&rel=0" title="${esc(v.title)}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
       <p class="vid-cred">${esc(v.title)} &middot; ${esc(v.channel)}</p>`;
   }
   document.addEventListener("click", e => { const b = e.target.closest("[data-video]"); if (b) { e.stopPropagation(); toggleVideo(b); } }, true);
-  function mediaHTML(id) {
+  function mediaHTML(id, lazy) {
+    const ld = lazy ? ' loading="lazy"' : "";
     const e = EX[id];
     const link = videoControl(id);
     if (PHOTO[id]) {
       const [f, cap] = PHOTO[id];
       return `<figure class="media"><div class="frame">
-          <img src="img/${f}_0.jpg" alt="${esc(e.name)}, start position" loading="lazy">
-          <img class="f2" src="img/${f}_1.jpg" alt="${esc(e.name)}, end position" loading="lazy">
+          <img src="img/${f}_0.jpg" alt="${esc(e.name)}, start position"${ld}>
+          <img class="f2" src="img/${f}_1.jpg" alt="${esc(e.name)}, end position"${ld}>
         </div><figcaption><span>${esc(cap || "Start and end position")}</span>${link}</figcaption><div class="video-slot" hidden></div></figure>`;
     }
     if (DIAG[id]) {
@@ -1161,7 +1164,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       <div class="list">
         ${list.map(([id, e]) => `<details class="ex" id="ex-${id}">
           <summary><h3>${esc(e.name)}</h3><small>${esc(e.target)}</small><span class="plus" aria-hidden="true">+</span></summary>
-          <div class="ex-body">${mediaHTML(id)}${formHTML(e)}</div>
+          <div class="ex-body">${mediaHTML(id, true)}${formHTML(e)}</div>
         </details>`).join("")}
       </div>`;
   }
@@ -1557,7 +1560,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
         beep(520, 0.05);
         const dial = P.querySelector("#dial"), mb = P.querySelector("#main-btn");
         if (hold === "idle") return runHold(st);
-        if (hold === "lead") { clockStop(); return renderEx(st); }
+        if (hold === "lead") { if (b !== mb) return; clockStop(); return renderEx(st); }
         if (hold === "run") { clockPause(); hold = "paused"; mb.textContent = "Resume"; mb.classList.remove("pause"); dial.classList.remove("running"); return; }
         if (hold === "paused") { clockResume(); hold = "run"; mb.textContent = "Pause"; mb.classList.add("pause"); dial.classList.add("running"); return; }
       }
