@@ -159,7 +159,7 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px));
 }
-.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--tabbar-h); }
+.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--tabbar-h); }
 .tab { background: none; border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 12px; font-weight: 600; color: var(--muted); }
 .tab svg { width: 22px; height: 22px; }
 .tab[aria-selected="true"] { color: var(--spruce); }
@@ -208,6 +208,105 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
 .finish p { margin: 0; color: var(--muted); max-width: 32ch; }
 .check { width: 84px; height: 84px; border-radius: 50%; background: var(--spruce-soft); color: var(--spruce); display: grid; place-items: center; }
 
+/* nutrition */
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; align-self: flex-start; }
+.seg button { border: 0; background: none; padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; min-height: 36px; }
+.seg button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.setup { gap: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld label, .weigh label { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.fld input, .fld select, .search input, .custom-row input, .weigh input {
+  width: 100%; min-width: 0; font: inherit; font-size: 16px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; min-height: 44px; }
+.pair { display: flex; align-items: center; gap: 6px; }
+.pair span, .unit { color: var(--muted); font-size: 14px; }
+.goals { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.goals legend { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.goal { position: relative; display: block; cursor: pointer; }
+.goal input { position: absolute; opacity: 0; }
+.goal span { display: flex; flex-direction: column; gap: 2px; height: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); }
+.goal small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.goal input:checked + span { border-color: var(--spruce); background: var(--spruce-soft); }
+.goal input:focus-visible + span { outline: 2px solid var(--spruce); outline-offset: 2px; }
+.preview { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; background: var(--spruce); color: var(--on-accent); border-radius: 14px; padding: 14px 16px; }
+.preview .note { color: inherit; opacity: .9; }
+.pv-main { display: flex; flex-direction: column; }
+.pv-main b { font-family: var(--f-display); font-size: 36px; font-weight: 800; line-height: 1; }
+.pv-main span { font-size: 13px; opacity: .85; }
+.pv-side { display: flex; flex-direction: column; gap: 2px; font-size: 13px; font-family: var(--f-mono); }
+.daynav { display: flex; align-items: center; justify-content: space-between; }
+.daynav .x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.daynav .x:disabled { opacity: .35; }
+.daynav b { font-family: var(--f-display); font-size: 18px; }
+.pro-card { flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ring-wrap { position: relative; width: 128px; height: 128px; flex: none; }
+.ring { width: 128px; height: 128px; }
+.ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 12; }
+.ring-fg { fill: none; stroke: var(--ochre); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray .4s; }
+.ring-fg.hit { stroke: var(--spruce); }
+.ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-num b { font-family: var(--f-mono); font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.ring-num span { font-size: 12px; color: var(--muted); }
+.pro-side { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.hit-chip { background: var(--spruce-soft); color: var(--spruce); font-weight: 700; }
+.kcal { display: flex; justify-content: space-between; width: 100%; font-size: 13px; color: var(--muted); }
+.kcal b { font-family: var(--f-mono); color: var(--ink); font-weight: 600; }
+.kbar { width: 100%; height: 6px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.kbar i { display: block; height: 100%; background: var(--spruce); }
+.quick { display: flex; gap: 8px; flex-wrap: wrap; }
+.foods { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.food { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 10px; min-height: 48px; font-size: 13px; line-height: 1.3; }
+.food b { font-family: var(--f-mono); color: var(--spruce); flex: none; }
+.food span { min-width: 0; }
+.food small { display: block; color: var(--muted); font-size: 11px; }
+.results { display: flex; flex-direction: column; gap: 6px; }
+.search { display: flex; flex-direction: column; gap: 6px; }
+.search-row { display: flex; gap: 8px; align-items: center; }
+.search-row input { flex: 1; }
+.search-row .btn { min-height: 44px; padding: 8px 16px; }
+.custom summary { cursor: pointer; font-weight: 600; color: var(--spruce); }
+.custom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.custom-row #cf-name { grid-column: 1 / -1; }
+.entry { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-block: 8px; border-top: 1px solid var(--line); }
+.entry:first-of-type { border-top: 0; }
+.en-main { min-width: 0; display: flex; flex-direction: column; }
+.en-main b { font-weight: 600; font-size: 15px; }
+.en-main small { color: var(--muted); font-size: 13px; }
+.en-q { display: flex; align-items: center; gap: 6px; flex: none; font-family: var(--f-mono); font-size: 14px; }
+.en-q .step { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-weight: 700; }
+.chart-wrap { overflow-x: auto; }
+.week-chart { width: 100%; min-width: 280px; height: auto; display: block; }
+.week-chart .bar { fill: var(--ochre); opacity: .75; }
+.week-chart .bar.hit { fill: var(--spruce); opacity: 1; }
+.week-chart .bar-val { fill: var(--ink); font-family: var(--f-mono); font-size: 10px; text-anchor: middle; }
+.week-chart .bar-day { fill: var(--muted); font-size: 10px; font-weight: 700; text-anchor: middle; }
+.week-chart .target-line { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+.week-chart .target-label { fill: var(--muted); font-family: var(--f-mono); font-size: 10px; }
+.meals { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.meals b { font-family: var(--f-mono); color: var(--spruce); white-space: nowrap; }
+.meals li { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.meals .chip { justify-content: center; }
+.plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.plan-grid div { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; }
+.plan-grid span { font-size: 12px; color: var(--muted); }
+.plan-grid b { font-family: var(--f-mono); font-size: 17px; }
+.weigh { display: flex; flex-direction: column; gap: 6px; }
+.why summary { list-style: none; cursor: pointer; }
+.why summary::-webkit-details-marker { display: none; }
+.why summary h2::after { content: " +"; color: var(--muted); font-family: var(--f-mono); }
+.why[open] summary h2::after { content: " \2212"; }
+.pt-card { flex-direction: row; justify-content: space-between; align-items: center; text-align: left; width: 100%; }
+.pt-card > div { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.pt-card b { font-family: var(--f-mono); font-size: 20px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.lg-work { background: var(--spruce); }
+.lg-pro { background: var(--ochre); }
+.cal-cell { border: 0; font: inherit; font-family: var(--f-mono); font-size: 13px; padding: 0; }
+.cal-cell:disabled { opacity: .5; }
+.cal-cell.pro::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 4px; height: 3px; border-radius: 2px; background: var(--ochre); }
+.cal-cell[data-day] { cursor: pointer; }
+
 /* progress */
 .statrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .statrow div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -231,6 +330,13 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
 .row-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 .dial[data-act] { cursor: pointer; }
+
+/* video */
+.vid-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 6px 12px; min-height: 32px; background: var(--spruce); color: var(--on-accent); font-size: 13px; font-weight: 700; }
+.video-slot { display: flex; flex-direction: column; gap: 6px; }
+.video-slot iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #000; }
+.video-slot.short iframe { aspect-ratio: 9 / 16; width: min(100%, 340px); max-height: 70vh; align-self: center; }
+.vid-cred, .vid-off { margin: 0; font-size: 12px; color: var(--muted); }
 
 /* player extras */
 .player { position: fixed; }
@@ -307,6 +413,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 <div class="app">
   <section class="view" id="view-today" aria-labelledby="h-today"></section>
   <section class="view" id="view-library" aria-labelledby="h-lib" hidden></section>
+  <section class="view" id="view-fuel" aria-labelledby="h-fuel" hidden></section>
   <section class="view" id="view-plan" aria-labelledby="h-plan" hidden></section>
   <section class="view" id="view-progress" aria-labelledby="h-progress" hidden></section>
 </div>
@@ -318,6 +425,9 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     </button>
     <button class="tab" role="tab" id="tab-library" aria-selected="false" data-view="library">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 14l-3 6M12 14l3 6M6 10h12"/></svg>Exercises
+    </button>
+    <button class="tab" role="tab" id="tab-fuel" aria-selected="false" data-view="fuel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11h17a8.5 8.5 0 0 1-17 0z"/><path d="M8 7.5c0-1.5 1.5-1.5 1.5-3M12 7.5c0-1.5 1.5-1.5 1.5-3M16 7.5c0-1.5 1.5-1.5 1.5-3"/></svg>Nutrition
     </button>
     <button class="tab" role="tab" id="tab-plan" aria-selected="false" data-view="plan">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Plan
@@ -610,6 +720,8 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     }
   };
 
+  let nutReady = false;
+
   // ---------- Media ----------
   // Photos: free-exercise-db (github.com/yuhonas/free-exercise-db), Unlicense / public domain. Two frames, start and end.
   const PHOTO = {
@@ -713,22 +825,75 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   requestAnimationFrame(diagLoop);
 
   function videoURL(name) { return "https://www.youtube.com/results?search_query=" + encodeURIComponent(name + " exercise form"); }
+
+  // Form videos: one verified YouTube clip per exercise. Loaded only when tapped.
+  const VIDEO = {
+    "chin-tuck": {"id": "gYbfkBybdnQ", "title": "Why Chin Tucks Are Good", "channel": "Bob & Brad", "short": true},
+    "head-lift": {"id": "7OgvJ653oxE", "title": "Chin tuck and lift (supine)", "channel": "Revival Performance Physical Therapy", "short": false},
+    "thoracic-chair": {"id": "IU0zlmXDxTM", "title": "Thoracic extension over back of chair", "channel": "Zang Physical Therapy", "short": false},
+    "wall-angel": {"id": "lbdMXeUoXgc", "title": "Wall Angels: Improve Posture & Shoulder Mobility | HEP Exercise #shoulderpain", "channel": "Pannell Performance Group", "short": true},
+    "doorway-pec": {"id": "3OfeaZEGJxE", "title": "Doorway Pec Stretch", "channel": "FM Physiotherapy", "short": true},
+    "hip-flexor": {"id": "rVM9UHmtQDM", "title": "Effective Hip Flexor Stretch (Fix APT!)", "channel": "Corexcell Sports Training & Rehab", "short": true},
+    "couch-stretch": {"id": "TML8Vqy-ACQ", "title": "Couch Stretch for Tight Hips, Knee Pain & Low Back Relief | Dr. Kelly Starrett", "channel": "The Ready State", "short": true},
+    "glute-bridge": {"id": "R1OXPHRqehw", "title": "How to do a glute bridge.", "channel": "Cleveland Clinic", "short": true},
+    "dead-bug": {"id": "bxn9FBrt4-A", "title": "How to do a Dead Bug | Proper Form & Technique | NASM", "channel": "National Academy of Sports Medicine (NASM)", "short": false},
+    "bird-dog": {"id": "LaLKNS7mxrk", "title": "Bird Dog Exercise for Beginners", "channel": "Margaret Martin, Physical Therapist", "short": false},
+    "rkc-plank": {"id": "7UPPhK0WKJA", "title": "RKC Plank", "channel": "John Rusin", "short": false},
+    "side-plank": {"id": "3_V_gPnxMrI", "title": "LOW Back Pain? Side Plank Variations – Basic Version", "channel": "Physio Energy", "short": true},
+    "clamshell": {"id": "zGytiOeQTkk", "title": "Lower Extremity Exercise - Clamshell - Zion Physical Therapy Video", "channel": "Zion Physical Therapy", "short": false},
+    "reverse-lunge": {"id": "-HjB2x75haE", "title": "Reverse Lunge: How To (3 steps to proper form)", "channel": "Born Fitness", "short": false},
+    "ytw": {"id": "CFt3WjCBbpc", "title": "Prone W, T, Y Scapular Retraction Exercise", "channel": "Peak Form Health Center", "short": false},
+    "pull-apart": {"id": "pASXdGKh-nc", "title": "Band Pull Apart - Opex Exercise Library", "channel": "OPEX Fitness", "short": false},
+    "face-pull": {"id": "PqL3B7Rcikg", "title": "Resistance Band Exercise: Facepulls for Upper Back Muscles #shorts", "channel": "Clench Fitness", "short": true},
+    "cable-face-pull": {"id": "5ZC4LagfDQ4", "title": "Cable Rope Face Pull", "channel": "OPEX Fitness", "short": false},
+    "open-book": {"id": "rDviWORCWEw", "title": "Open Books (Sidelying Thoracic Rotation)", "channel": "Revival Performance Physical Therapy", "short": false},
+    "cat-cow": {"id": "WHUevrqeKIg", "title": "How to do a cat-cow yoga pose.", "channel": "Cleveland Clinic", "short": true},
+    "breathing": {"id": "VauJAtdN1Aw", "title": "90/90 Hip Lift", "channel": "CafePhysio", "short": true},
+    "glute-squeeze": {"id": "D2mywbD-Wxc", "title": "Standing Pelvic Tilt (Back to the Wall)", "channel": "Dr. Dawn Thomas Physical Therapy", "short": true},
+    "childs-pose": {"id": "_ZX_zTOBgp8", "title": "How to do a Child's Pose Stretch | Proper Form & Technique | NASM", "channel": "National Academy of Sports Medicine (NASM)", "short": false},
+    "suboccipital": {"id": "xTdsxUgitPo", "title": "Lacrosse Ball Suboccipital Release for Tension Headaches & Neck Stiffness (5 Min)", "channel": "The Ready State", "short": true},
+    "levator": {"id": "SpJ1faG4rPE", "title": "Levator Scapula Stretch", "channel": "Pritchette Physical Therapy & Sports Performance", "short": true},
+    "hip-thrust": {"id": "TJJlf-sq_RY", "title": "Barbell Hip Thrusts", "channel": "The Barbell Physio", "short": false},
+    "rdl": {"id": "2bmuYtv4HbQ", "title": "How to do a Romanian Deadlift", "channel": "National Academy of Sports Medicine (NASM)", "short": false},
+    "split-squat": {"id": "o7yFuIR9XVU", "title": "Bulgarian Split Squats Made Easy (FORM FIX)", "channel": "ATHLEAN-X™", "short": true},
+    "chest-row": {"id": "2ByilQ4NaAs", "title": "The PERFECT Chest-Supported Dumbbell Rows", "channel": "Andrew Kwong (DeltaBolic)", "short": true},
+    "pallof": {"id": "3-2uxtBmznI", "title": "Pallof Press - a Spine Sparing Exercise", "channel": "Physical Therapy & Hand Clinic of Hillsboro", "short": false},
+    "bosu-dead-bug": {"id": "HDNcDhK9OBY", "title": "BOSU Dead Bug Exercise", "channel": "shapecon", "short": false},
+    "bosu-plank": {"id": "pCmIHqSV0gE", "title": "Exercise Tutorial: Plank On Bosu Ball", "channel": "Travis Tarrant", "short": false},
+    "bosu-bridge": {"id": "cd2s4AIu8pY", "title": "BOSU Ball Glute Bridge", "channel": "Proven Physical Therapy", "short": false},
+    "bosu-ytw": {"id": "VHA_Ems7fNI", "title": "Stability Ball Y-T-W Raises | Exercise Demo | Coaching Software | QuickCoach", "channel": "QuickCoach", "short": false}
+  };
+  function videoControl(id) {
+    const v = VIDEO[id];
+    if (!v) return `<a href="${videoURL(EX[id].name)}" target="_blank" rel="noopener">Find videos</a>`;
+    return `<button class="vid-btn" data-video="${id}" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Watch video</button>`;
+  }
+  function toggleVideo(btn) {
+    const id = btn.dataset.video, v = VIDEO[id], fig = btn.closest(".media"), slot = fig.querySelector(".video-slot");
+    if (slot.childElementCount) { slot.innerHTML = ""; slot.hidden = true; btn.setAttribute("aria-expanded", "false"); btn.lastChild.textContent = "Watch video"; return; }
+    slot.hidden = false; btn.setAttribute("aria-expanded", "true"); btn.lastChild.textContent = "Hide video";
+    if (!navigator.onLine) { slot.innerHTML = '<p class="vid-off">Videos need a connection. Photos and cues work offline.</p>'; return; }
+    slot.className = "video-slot" + (v.short ? " short" : "");
+    slot.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?autoplay=1&playsinline=1&rel=0" title="${esc(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+      <p class="vid-cred">${esc(v.title)} &middot; ${esc(v.channel)}</p>`;
+  }
+  document.addEventListener("click", e => { const b = e.target.closest("[data-video]"); if (b) { e.stopPropagation(); toggleVideo(b); } }, true);
   function mediaHTML(id) {
     const e = EX[id];
-    const link = `<a href="${videoURL(e.name)}" target="_blank" rel="noopener">Watch form videos</a>`;
+    const link = videoControl(id);
     if (PHOTO[id]) {
       const [f, cap] = PHOTO[id];
       return `<figure class="media"><div class="frame">
           <img src="img/${f}_0.jpg" alt="${esc(e.name)}, start position" loading="lazy">
           <img class="f2" src="img/${f}_1.jpg" alt="${esc(e.name)}, end position" loading="lazy">
-        </div><figcaption><span>${esc(cap || "Start and end position")}</span>${link}</figcaption></figure>`;
+        </div><figcaption><span>${esc(cap || "Start and end position")}</span>${link}</figcaption><div class="video-slot" hidden></div></figure>`;
     }
     if (DIAG[id]) {
       return `<figure class="media"><div class="frame">
           <svg viewBox="0 0 200 140" data-diag="${id}" role="img" aria-label="Animated diagram: ${esc(e.name)}"></svg>
-        </div><figcaption><span>${esc(DIAG[id].note)}</span>${link}</figcaption></figure>`;
+        </div><figcaption><span>${esc(DIAG[id].note)}</span>${link}</figcaption><div class="video-slot" hidden></div></figure>`;
     }
-    return `<figure class="media"><figcaption><span></span>${link}</figcaption></figure>`;
+    return `<figure class="media"><figcaption><span></span>${link}</figcaption><div class="video-slot" hidden></div></figure>`;
   }
 
   // ---------- Routines ----------
@@ -906,6 +1071,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           <button class="btn btn-light" data-start="desk" style="background:transparent;color:inherit;border:1.5px solid currentColor">Desk Reset</button>
         </div>
       </div>
+      ${proteinTodayCard()}
       <div class="list" role="list">
         <p class="eyebrow">All routines</p>
         ${ROUTINES.map(r => {
@@ -917,6 +1083,15 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           </button>`;
         }).join("")}
       </div>`;
+  }
+
+  function proteinTodayCard() {
+    if (!nutReady) return "";
+    const t = targets();
+    if (!t) return `<button class="card pt-card" data-goto="fuel"><div><p class="eyebrow">Nutrition</p><b>Set your protein target</b></div><span class="go">${icon.play}</span></button>`;
+    const got = Math.round(dayTotals(dkey(new Date())).p);
+    return `<button class="card pt-card" data-goto="fuel"><div><p class="eyebrow">Protein today</p><b>${got} / ${t.protein} g</b>
+      <div class="kbar"><i style="width:${Math.min(100, got / t.protein * 100).toFixed(0)}%"></i></div></div><span class="go">+</span></button>`;
   }
 
   // ---------- Library ----------
@@ -1008,7 +1183,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   }
 
   // ---------- Tabs ----------
-  const views = ["today", "library", "plan", "progress"];
+  const views = ["today", "library", "fuel", "plan", "progress"];
   function showView(v) {
     views.forEach(n => {
       document.getElementById("view-" + n).hidden = n !== v;
@@ -1016,6 +1191,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     });
     if (v === "today") renderToday();
     if (v === "progress") renderProgress();
+    if (v === "fuel") { nutDay = dkey(new Date()); renderNutrition(); }
     window.scrollTo(0, 0);
     try { sessionStorage.setItem("pr-view", v); } catch (e) {}
   }
@@ -1026,6 +1202,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     const b = e.target.closest("[data-filter]"); if (b) { filter = b.dataset.filter; renderLibrary(); }
   });
   document.querySelector(".app").addEventListener("click", e => {
+    const g = e.target.closest("[data-goto]"); if (g) return showView(g.dataset.goto);
     const b = e.target.closest("[data-start]"); if (b) openPlayer(b.dataset.start);
   });
 
@@ -1341,6 +1518,316 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     if (e.key === "Escape") { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); else closePlayer(); }
   });
 
+  // ---------- Nutrition (protein first) ----------
+  // Setup modeled on MyFitnessPal/MacroFactor: body stats + activity + goal -> targets. Logging: quick add, common/recent foods, Open Food Facts search.
+  const NKEY = "workout-app-nutrition-v1";
+  nutReady = true;
+  const nut = Object.assign({ profile: null, days: {}, weights: {}, foods: [] }, loadJSON(NKEY, {}));
+  const saveNut = () => saveJSON(NKEY, nut);
+  let nutDay = dkey(new Date()), nutEditing = false, searchResults = [], searchState = "";
+
+  const ACTIVITY = [
+    [1.2, "Desk job, little exercise"],
+    [1.375, "Desk job + 2 to 3 workouts a week"],
+    [1.55, "Desk job + 4 to 5 workouts a week"],
+    [1.725, "Active job or daily hard training"]
+  ];
+  const GOALS = {
+    lose: { name: "Lose fat", kcal: 0.80, p: 2.2, lo: 1.8, hi: 2.7, rate: "About 0.5 to 1% of body weight per week", why: "Protein is highest here. In a calorie deficit it's what keeps muscle on while fat comes off." },
+    gain: { name: "Gain muscle, stay lean", kcal: 1.06, p: 2.0, lo: 1.6, hi: 2.2, rate: "About 0.25% of body weight per week", why: "A small surplus with high protein. Slow gain that's mostly muscle." },
+    bulk: { name: "Bulk", kcal: 1.12, p: 1.8, lo: 1.6, hi: 2.2, rate: "About 0.5% of body weight per week", why: "Extra calories do more of the work, so protein can sit a bit lower. Expect some fat gain." },
+    maintain: { name: "Maintain", kcal: 1.0, p: 1.8, lo: 1.6, hi: 2.2, rate: "Weight holds steady", why: "Enough protein to keep building strength while weight stays put." }
+  };
+  // Approximate values for common US servings: [name, protein g, kcal]
+  const FOODS = [
+    ["Chicken breast, 4 oz cooked", 35, 185], ["Whey protein, 1 scoop", 24, 120], ["Greek yogurt, 1 cup nonfat", 23, 130],
+    ["Eggs, 2 large", 12, 140], ["Egg whites, 1 cup", 26, 125], ["Cottage cheese, 1 cup low-fat", 26, 180],
+    ["Lean ground beef, 4 oz cooked", 28, 240], ["Salmon, 4 oz cooked", 28, 230], ["Tuna, 1 can drained", 28, 130],
+    ["Turkey deli meat, 3 oz", 15, 90], ["Milk, 1 cup 2%", 8, 120], ["Protein bar", 20, 220],
+    ["Beef jerky, 1 oz", 10, 80], ["Firm tofu, 1/2 block", 20, 180], ["Lentils, 1 cup cooked", 18, 230], ["Shrimp, 4 oz cooked", 27, 120]
+  ];
+  const MEAL_IDEAS = [
+    ["Breakfast", [["Greek yogurt, 1 cup nonfat", 23], ["Whey protein, 1 scoop", 24]]],
+    ["Breakfast", [["Eggs, 2 large", 12], ["Egg whites, 1 cup", 26]]],
+    ["Lunch", [["Chicken breast, 4 oz cooked", 35], ["Milk, 1 cup 2%", 8]]],
+    ["Lunch", [["Tuna, 1 can drained", 28], ["Cottage cheese, 1/2 cup", 13]]],
+    ["Dinner", [["Salmon, 4 oz cooked", 28], ["Lentils, 1 cup cooked", 18]]],
+    ["Snack", [["Cottage cheese, 1 cup low-fat", 26], ["Beef jerky, 1 oz", 10]]]
+  ];
+
+  function calcTargets(p) {
+    const g = GOALS[p.goal] || GOALS.maintain;
+    const m = p.heightCm / 100, bmi = p.weightKg / (m * m);
+    // For higher body fat, base protein on the weight at BMI 25 so the target isn't inflated by fat mass.
+    const adjusted = bmi > 27;
+    const refKg = adjusted ? 25 * m * m : p.weightKg;
+    const sexAdj = p.sex === "m" ? 5 : p.sex === "f" ? -161 : -78;
+    const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + sexAdj; // Mifflin-St Jeor
+    const tdee = bmr * p.activity;
+    const r5 = x => Math.round(x / 5) * 5;
+    const protein = r5(g.p * refKg);
+    return { g, bmi, adjusted, refKg, bmr, tdee, kcal: Math.round(tdee * g.kcal / 10) * 10,
+      protein, lo: r5(g.lo * refKg), hi: r5(g.hi * refKg), perMeal: r5(Math.max(0.4 * refKg, protein / 4)) };
+  }
+  const targets = () => nut.profile ? calcTargets(nut.profile) : null;
+  const dayEntries = k => nut.days[k] || [];
+  const dayTotals = k => dayEntries(k).reduce((a, e) => ({ p: a.p + e.p * e.q, k: a.k + e.k * e.q }), { p: 0, k: 0 });
+  const proteinHit = k => { const t = targets(); return !!t && dayTotals(k).p >= t.protein; };
+  const isImp = () => !nut.profile || nut.profile.units !== "met";
+  const kgToDisp = kg => isImp() ? Math.round(kg / 0.45359 * 10) / 10 : Math.round(kg * 10) / 10;
+  const wUnit = () => isImp() ? "lb" : "kg";
+
+  function addEntry(name, p, k) {
+    const list = nut.days[nutDay] = dayEntries(nutDay).slice();
+    const same = list.find(e => e.n === name && e.p === p);
+    if (same) same.q = Math.round((same.q + 1) * 10) / 10;
+    else list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), n: name, p: Math.round(p * 10) / 10, k: Math.round(k || 0), q: 1 });
+    saveNut(); buzz(30); renderNutrition();
+  }
+
+  function ring(val, target) {
+    const r = 52, c = 2 * Math.PI * r, frac = Math.min(1, target ? val / target : 0);
+    return `<svg class="ring" viewBox="0 0 128 128" aria-hidden="true">
+      <circle cx="64" cy="64" r="${r}" class="ring-bg"/>
+      <circle cx="64" cy="64" r="${r}" class="ring-fg${frac >= 1 ? " hit" : ""}" stroke-dasharray="${(c * frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 64 64)"/>
+    </svg>`;
+  }
+  function weekChart(t) {
+    const days = [], base = new Date(nutDay + "T12:00:00");
+    for (let i = 6; i >= 0; i--) { const d = new Date(base); d.setDate(base.getDate() - i); days.push(d); }
+    const vals = days.map(d => Math.round(dayTotals(dkey(d)).p));
+    const max = Math.max(t.protein * 1.25, ...vals, 1), W = 300, H = 120, top = 14, bottom = 22, bw = 26;
+    const y = v => top + (H - top - bottom) * (1 - v / max);
+    const bars = days.map((d, i) => {
+      const x = 18 + i * ((W - 36) / 6) - bw / 2, v = vals[i];
+      return `<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw}" height="${Math.max(0, H - bottom - y(v)).toFixed(1)}" rx="4" class="${v >= t.protein ? "bar hit" : "bar"}"/>
+        ${v ? `<text x="${(x + bw / 2).toFixed(1)}" y="${(y(v) - 4).toFixed(1)}" class="bar-val">${v}</text>` : ""}
+        <text x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" class="bar-day">${"SMTWTFS"[d.getDay()]}</text>`;
+    }).join("");
+    return `<svg class="week-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Protein for the last 7 days against a ${t.protein} gram target">
+      <line x1="0" x2="${W}" y1="${y(t.protein).toFixed(1)}" y2="${y(t.protein).toFixed(1)}" class="target-line"/>
+      <text x="${W - 2}" y="${(y(t.protein) - 4).toFixed(1)}" class="target-label" text-anchor="end">${t.protein} g</text>
+      ${bars}</svg>`;
+  }
+
+  function setupForm(draft) {
+    const p = draft || nut.profile || { units: "imp", heightCm: 178, weightKg: 81.6, age: 30, sex: "m", activity: 1.375, goal: "gain" };
+    const imp = p.units !== "met";
+    const ft = Math.floor(p.heightCm / 2.54 / 12), inch = Math.round(p.heightCm / 2.54 - ft * 12);
+    return `
+      <form class="card setup" id="nut-form" novalidate>
+        <h2>${nut.profile ? "Edit your plan" : "Set your protein target"}</h2>
+        <p class="note">${nut.profile ? "Targets update as you change things." : "Example values are filled in. Replace them with yours."}</p>
+        <div class="seg" role="group" aria-label="Units">
+          <button type="button" data-units="imp" aria-pressed="${imp}">lb / ft</button>
+          <button type="button" data-units="met" aria-pressed="${!imp}">kg / cm</button>
+        </div>
+        <div class="grid2">
+          ${imp ? `<div class="fld"><label for="f-ft">Height</label><div class="pair"><input id="f-ft" type="number" inputmode="numeric" min="3" max="8" value="${ft}"><span>ft</span><input id="f-in" type="number" inputmode="numeric" min="0" max="11" value="${inch}"><span>in</span></div></div>`
+                : `<div class="fld"><label for="f-cm">Height</label><div class="pair"><input id="f-cm" type="number" inputmode="numeric" min="100" max="230" value="${Math.round(p.heightCm)}"><span>cm</span></div></div>`}
+          <div class="fld"><label for="f-wt">Weight</label><div class="pair"><input id="f-wt" type="number" inputmode="decimal" min="30" max="700" step="0.1" value="${imp ? Math.round(p.weightKg / 0.45359) : Math.round(p.weightKg * 10) / 10}"><span>${imp ? "lb" : "kg"}</span></div></div>
+          <div class="fld"><label for="f-age">Age</label><div class="pair"><input id="f-age" type="number" inputmode="numeric" min="14" max="99" value="${p.age}"><span>yrs</span></div></div>
+          <div class="fld"><label for="f-sex">Sex</label><select id="f-sex">
+            <option value="m"${p.sex === "m" ? " selected" : ""}>Male</option><option value="f"${p.sex === "f" ? " selected" : ""}>Female</option><option value="x"${p.sex === "x" ? " selected" : ""}>Prefer not to say</option></select></div>
+        </div>
+        <div class="fld"><label for="f-act">Activity</label><select id="f-act">${ACTIVITY.map(a => `<option value="${a[0]}"${+p.activity === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></div>
+        <fieldset class="goals"><legend>Goal</legend>
+          ${Object.entries(GOALS).map(([k, g]) => `<label class="goal"><input type="radio" name="goal" value="${k}"${p.goal === k ? " checked" : ""}><span><b>${g.name}</b><small>${g.rate}</small></span></label>`).join("")}
+        </fieldset>
+        <div class="preview" id="nut-preview" aria-live="polite"></div>
+        <div class="row-btns">
+          <button class="btn btn-primary" type="submit">Save plan</button>
+          ${nut.profile ? '<button class="btn btn-ghost" type="button" data-nut="cancel">Cancel</button>' : ""}
+        </div>
+      </form>`;
+  }
+  function readForm() {
+    const f = document.getElementById("nut-form"); if (!f) return null;
+    const units = f.querySelector('[data-units][aria-pressed="true"]').dataset.units, num = id => parseFloat((f.querySelector("#" + id) || {}).value);
+    const heightCm = units === "imp" ? ((num("f-ft") || 0) * 12 + (num("f-in") || 0)) * 2.54 : num("f-cm");
+    const weightKg = units === "imp" ? num("f-wt") * 0.45359 : num("f-wt");
+    const goal = (f.querySelector('input[name="goal"]:checked') || {}).value || "maintain";
+    const p = { units, heightCm, weightKg, age: num("f-age"), sex: f.querySelector("#f-sex").value, activity: parseFloat(f.querySelector("#f-act").value), goal };
+    const ok = heightCm >= 120 && heightCm <= 230 && weightKg >= 35 && weightKg <= 320 && p.age >= 14 && p.age <= 99;
+    return ok ? p : null;
+  }
+  function updatePreview() {
+    const el = document.getElementById("nut-preview"); if (!el) return;
+    const p = readForm();
+    if (!p) { el.innerHTML = '<p class="note">Enter height, weight and age to see your targets.</p>'; return; }
+    const imp = p.units === "imp", t = calcTargets(p), perLb = (t.protein / (p.weightKg / 0.45359)).toFixed(2);
+    el.innerHTML = `<div class="pv-main"><b>${t.protein} g</b><span>protein a day</span></div>
+      <div class="pv-side"><span>Range ${t.lo} to ${t.hi} g</span><span>${t.kcal.toLocaleString()} kcal a day</span><span>${imp ? perLb + " g per lb" : (t.protein / p.weightKg).toFixed(1) + " g per kg"}</span></div>`;
+  }
+
+  function renderNutrition() {
+    const el = document.getElementById("view-fuel");
+    if (!nut.profile || nutEditing) {
+      el.innerHTML = `<header class="hdr"><p class="eyebrow">Nutrition</p><h1 id="h-fuel">Protein</h1>
+        <p>Your daily protein target is set from your height, weight, activity and goal. Calories are shown too, but protein comes first.</p></header>${setupForm()}`;
+      updatePreview(); return;
+    }
+    const t = targets(), tot = dayTotals(nutDay), left = Math.max(0, Math.round(t.protein - tot.p));
+    const isToday = nutDay === dkey(new Date());
+    const dlabel = isToday ? "Today" : new Date(nutDay + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const recent = [];
+    Object.keys(nut.days).sort().reverse().forEach(k => nut.days[k].forEach(e => { if (e.n !== "Quick add" && !recent.find(r => r[0] === e.n) && recent.length < 6) recent.push([e.n, e.p, e.k]); }));
+    const chips = list => list.map(f => `<button class="food" data-food='${esc(JSON.stringify(f))}'><span>${esc(f[0])}</span><b>${f[1]} g</b></button>`).join("");
+    const entries = dayEntries(nutDay);
+    const pr = nut.profile, latestW = kgToDisp(pr.weightKg);
+    el.innerHTML = `
+      <header class="hdr"><p class="eyebrow">Nutrition &middot; ${esc(t.g.name)}</p><h1 id="h-fuel">Protein</h1></header>
+      <div class="daynav">
+        <button class="x" data-nut="prev-day" aria-label="Previous day">${icon.prev}</button>
+        <b>${esc(dlabel)}</b>
+        <button class="x" data-nut="next-day" aria-label="Next day" ${isToday ? "disabled" : ""}>${icon.next}</button>
+      </div>
+      <div class="card pro-card">
+        <div class="ring-wrap">${ring(tot.p, t.protein)}<div class="ring-num"><b>${Math.round(tot.p)}</b><span>of ${t.protein} g</span></div></div>
+        <div class="pro-side">
+          <span class="chip ${left ? "" : "hit-chip"}">${left ? left + " g to go" : "Target hit"}</span>
+          <p class="note">Optimal range ${t.lo} to ${t.hi} g. About ${t.perMeal} g per meal over 4 meals.</p>
+          <div class="kcal"><span>Calories</span><b>${Math.round(tot.k).toLocaleString()} / ${t.kcal.toLocaleString()}</b></div>
+          <div class="kbar"><i style="width:${Math.min(100, tot.k / t.kcal * 100).toFixed(0)}%"></i></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Add protein</h2>
+        <div class="quick">${[10, 20, 30, 40].map(g => `<button class="pill-btn" data-quick="${g}">+${g} g</button>`).join("")}</div>
+        ${recent.length ? `<p class="eyebrow">Recent</p><div class="foods">${chips(recent)}</div>` : ""}
+        <p class="eyebrow">Common foods</p>
+        <div class="foods">${chips(nut.foods.map(f => [f.n, f.p, f.k]).concat(FOODS))}</div>
+        <form class="search" id="food-search" role="search">
+          <label for="food-q" class="eyebrow">Search packaged foods</label>
+          <div class="search-row"><input id="food-q" type="search" placeholder="e.g. Chobani, Fairlife, Quest bar" autocomplete="off"><button class="btn btn-primary" type="submit">Search</button></div>
+        </form>
+        <div id="food-results">${searchState}</div>
+        <details class="custom"><summary>Add your own food</summary>
+          <form id="custom-food" class="custom-row">
+            <input id="cf-name" placeholder="Name" required aria-label="Food name">
+            <input id="cf-p" type="number" inputmode="decimal" placeholder="Protein g" required aria-label="Protein grams">
+            <input id="cf-k" type="number" inputmode="numeric" placeholder="kcal" aria-label="Calories">
+            <button class="btn btn-primary" type="submit">Add</button>
+          </form>
+        </details>
+      </div>
+      <div class="card">
+        <h2>${isToday ? "Today's log" : "Log"}</h2>
+        ${entries.length ? entries.map(e => `<div class="entry">
+            <div class="en-main"><b>${esc(e.n)}</b><small>${Math.round(e.p * e.q)} g protein${e.k ? " &middot; " + Math.round(e.k * e.q) + " kcal" : ""}</small></div>
+            <div class="en-q"><button class="step" data-qty="${e.id}" data-d="-0.5" aria-label="Less">&minus;</button><span>${e.q}x</span><button class="step" data-qty="${e.id}" data-d="0.5" aria-label="More">+</button></div>
+          </div>`).join("") : '<p class="note">Nothing logged yet. Tap a food or a quick-add amount above.</p>'}
+      </div>
+      <div class="card">
+        <h2>Last 7 days</h2>
+        <div class="chart-wrap">${weekChart(t)}</div>
+      </div>
+      <div class="card">
+        <h2>Hitting ${t.perMeal} g a meal</h2>
+        <p class="note">Spreading protein over 3 to 5 meals works better than one big serving. Each of these lands around 35 to 50 g.</p>
+        <ul class="meals">${MEAL_IDEAS.map(([m, items]) => `<li><span class="chip">${m}</span><span>${items.map(i => esc(i[0])).join(" + ")} <b>${items.reduce((a, i) => a + i[1], 0)} g</b></span></li>`).join("")}</ul>
+      </div>
+      <div class="card">
+        <h2>Your plan</h2>
+        <div class="plan-grid">
+          <div><span>Goal</span><b>${esc(t.g.name)}</b></div>
+          <div><span>Protein</span><b>${t.protein} g</b></div>
+          <div><span>Calories</span><b>${t.kcal.toLocaleString()}</b></div>
+          <div><span>Maintenance</span><b>${Math.round(t.tdee / 10) * 10}</b></div>
+        </div>
+        <form id="weigh-in" class="weigh">
+          <label for="w-today">Log today's weight</label>
+          <div class="search-row"><input id="w-today" type="number" inputmode="decimal" step="0.1" value="${latestW}"><span class="unit">${wUnit()}</span><button class="btn btn-ghost" type="submit">Update</button></div>
+        </form>
+        ${t.adjusted ? `<p class="note">Protein is based on ${Math.round(kgToDisp(t.refKg))} ${wUnit()}, the weight at a BMI of 25, so the target reflects muscle rather than total weight.</p>` : ""}
+        <p class="note">${esc(t.g.rate)}. ${esc(t.g.why)}</p>
+        <button class="btn btn-ghost" data-nut="edit">Edit plan</button>
+      </div>
+      <details class="card why"><summary><h2>Why these numbers</h2></summary>
+        <ul>
+          <li>Muscle gain from training tops out around 1.6 g of protein per kg of body weight a day (0.7 g per lb), with some people benefiting up to about 2.2 g per kg (1 g per lb).</li>
+          <li>During a calorie deficit, more protein (about 2.2 to 2.7 g per kg) helps hold on to muscle.</li>
+          <li>Roughly 0.4 g per kg per meal, spread over at least 4 meals, is a practical way to get there.</li>
+          <li>Calories use the Mifflin-St Jeor equation times your activity level. It's an estimate: if your weight isn't moving the way your goal says after 2 to 3 weeks, adjust by about 150 kcal.</li>
+        </ul>
+        <p class="note">General guidance, not medical advice. Check with a doctor if you have kidney disease or another condition that affects protein needs.</p>
+      </details>`;
+  }
+
+  async function runSearch(q) {
+    const box = document.getElementById("food-results");
+    if (!navigator.onLine) { searchState = '<p class="note">Search needs a connection. Common foods and quick add work offline.</p>'; box.innerHTML = searchState; return; }
+    box.innerHTML = '<p class="note">Searching Open Food Facts...</p>';
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const url = "https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&json=1&page_size=20&fields=product_name,brands,nutriments,serving_size,serving_quantity&search_terms=" + encodeURIComponent(q);
+      const res = await fetch(url, { signal: ctl.signal });
+      const data = await res.json();
+      searchResults = (data.products || []).map(x => {
+        const n = x.nutriments || {}, name = [x.product_name, (x.brands || "").split(",")[0]].filter(Boolean).join(" · ");
+        if (!name || n.proteins_100g == null) return null;
+        if (n.proteins_serving != null && x.serving_size) return { n: name, p: +n.proteins_serving, k: +(n["energy-kcal_serving"] || 0), per: x.serving_size };
+        return { n: name + " (100 g)", p: +n.proteins_100g, k: +(n["energy-kcal_100g"] || 0), per: "100 g" };
+      }).filter(Boolean).slice(0, 12);
+      searchState = searchResults.length ? `<div class="results">${searchResults.map((r, i) => `<button class="food result" data-result="${i}"><span>${esc(r.n)}<small>per ${esc(r.per)} &middot; ${Math.round(r.k)} kcal</small></span><b>${Math.round(r.p * 10) / 10} g</b></button>`).join("")}</div><p class="note">From Open Food Facts, a crowd-sourced database. Check the label if a number looks off.</p>`
+        : '<p class="note">No matches with protein info. Try a brand name, or add it as your own food.</p>';
+    } catch (e) {
+      searchState = '<p class="note">Search didn\'t respond. Try again in a moment, or add it as your own food.</p>';
+    } finally { clearTimeout(timer); }
+    const b2 = document.getElementById("food-results"); if (b2) b2.innerHTML = searchState;
+  }
+
+  const fuel = document.getElementById("view-fuel");
+  fuel.addEventListener("input", e => { if (e.target.closest("#nut-form")) updatePreview(); });
+  fuel.addEventListener("change", e => { if (e.target.closest("#nut-form")) updatePreview(); });
+  fuel.addEventListener("click", e => {
+    const u = e.target.closest("[data-units]");
+    if (u) {
+      const draft = Object.assign({}, readForm() || nut.profile || {}, { units: u.dataset.units });
+      if (!draft.heightCm) Object.assign(draft, { heightCm: 178, weightKg: 81.6, age: 30, sex: "m", activity: 1.375, goal: "gain" });
+      document.getElementById("nut-form").outerHTML = setupForm(draft); updatePreview(); return;
+    }
+    const f = e.target.closest("[data-food]");
+    if (f) { const [n, p, k] = JSON.parse(f.dataset.food); return addEntry(n, p, k); }
+    const r = e.target.closest("[data-result]");
+    if (r) { const x = searchResults[+r.dataset.result]; return addEntry(x.n, x.p, x.k); }
+    const qk = e.target.closest("[data-quick]");
+    if (qk) return addEntry("Quick add", +qk.dataset.quick, 0);
+    const qt = e.target.closest("[data-qty]");
+    if (qt) {
+      const list = dayEntries(nutDay), en = list.find(x => x.id === qt.dataset.qty);
+      if (en) { en.q = Math.round((en.q + parseFloat(qt.dataset.d)) * 10) / 10; if (en.q <= 0) list.splice(list.indexOf(en), 1); saveNut(); renderNutrition(); }
+      return;
+    }
+    const a = e.target.closest("[data-nut]"); if (!a) return;
+    const act = a.dataset.nut;
+    if (act === "edit") { nutEditing = true; renderNutrition(); window.scrollTo(0, 0); }
+    if (act === "cancel") { nutEditing = false; renderNutrition(); }
+    if (act === "prev-day" || act === "next-day") {
+      const d = new Date(nutDay + "T12:00:00"); d.setDate(d.getDate() + (act === "prev-day" ? -1 : 1));
+      if (dkey(d) <= dkey(new Date())) { nutDay = dkey(d); searchState = ""; renderNutrition(); }
+    }
+  });
+  fuel.addEventListener("submit", e => {
+    e.preventDefault();
+    const id = e.target.id;
+    if (id === "nut-form") {
+      const p = readForm(); if (!p) { updatePreview(); return; }
+      nut.profile = p; nut.weights[dkey(new Date())] = Math.round(p.weightKg * 10) / 10; nutEditing = false; saveNut(); renderNutrition(); window.scrollTo(0, 0);
+    } else if (id === "food-search") {
+      const q = document.getElementById("food-q").value.trim(); if (q) runSearch(q);
+    } else if (id === "custom-food") {
+      const n = document.getElementById("cf-name").value.trim(), p = parseFloat(document.getElementById("cf-p").value), k = parseFloat(document.getElementById("cf-k").value) || 0;
+      if (!n || !(p >= 0)) return;
+      if (!nut.foods.find(f => f.n === n)) nut.foods.unshift({ n, p, k });
+      nut.foods = nut.foods.slice(0, 12); addEntry(n, p, k);
+    } else if (id === "weigh-in") {
+      const v = parseFloat(document.getElementById("w-today").value); if (!(v > 0)) return;
+      const kg = isImp() ? v * 0.45359 : v;
+      nut.profile.weightKg = kg; nut.weights[dkey(new Date())] = Math.round(kg * 10) / 10; saveNut(); renderNutrition();
+    }
+  });
+
   // ---------- Progress ----------
   function streakDays() {
     const d = new Date(); let n = 0;
@@ -1370,7 +1857,8 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       const k = dkey(new Date(y, m, d)), list = log[k] || [];
       const isToday = d === now.getDate();
       const title = list.length ? list.map(id => R[id] ? R[id].name : id).join(", ") : "No sessions";
-      cells += `<div class="cal-cell${list.length ? " on" : ""}${isToday ? " today" : ""}" title="${esc(title)}" aria-label="${d}: ${esc(title)}"><span>${d}</span>${list.length > 1 ? `<small>${list.length}</small>` : ""}</div>`;
+      const pro = proteinHit(k), future = d > now.getDate();
+      cells += `<button class="cal-cell${list.length ? " on" : ""}${isToday ? " today" : ""}${pro ? " pro" : ""}" ${future ? "disabled" : `data-day="${k}"`} title="${esc(title)}" aria-label="${d}: ${esc(title)}${pro ? ", protein target hit" : ""}"><span>${d}</span>${list.length > 1 ? `<small>${list.length}</small>` : ""}</button>`;
     }
     const liftRows = Object.entries(lifts).filter(([id, h]) => EX[id] && h.length).map(([id, h]) => {
       const tops = h.map(x => Math.max(0, ...x.sets.map(s => s.w)));
@@ -1396,6 +1884,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       <div class="card">
         <h2>${now.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
         <div class="cal">${["M", "T", "W", "T", "F", "S", "S"].map(d => `<div class="cal-head">${d}</div>`).join("")}${cells}</div>
+        <div class="legend"><span><i class="lg-work"></i>Workout</span><span><i class="lg-pro"></i>Protein target hit</span><span>Tap a day to see its food log</span></div>
       </div>
       <div class="card">
         <h2>Lifts</h2>
@@ -1413,7 +1902,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       </div>`;
   }
   async function exportBackup() {
-    const data = JSON.stringify({ app: "workout-app", version: 1, exported: new Date().toISOString(), log, lifts, prefs }, null, 1);
+    const data = JSON.stringify({ app: "workout-app", version: 2, exported: new Date().toISOString(), log, lifts, prefs, nutrition: nut }, null, 1);
     const name = "workout-backup-" + dkey(new Date()) + ".json";
     const msg = document.getElementById("backup-msg");
     try {
@@ -1435,12 +1924,22 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
         const have = new Set((lifts[id] || []).map(x => x.s));
         lifts[id] = (lifts[id] || []).concat(h.filter(x => !have.has(x.s))).sort((a, b) => a.s - b.s).slice(-24);
       });
+      if (d.nutrition) {
+        const dn = d.nutrition;
+        if (!nut.profile && dn.profile) nut.profile = dn.profile;
+        Object.entries(dn.days || {}).forEach(([k, v]) => { if (!nut.days[k] || v.length > nut.days[k].length) nut.days[k] = v; });
+        nut.weights = Object.assign({}, dn.weights || {}, nut.weights);
+        (dn.foods || []).forEach(f => { if (!nut.foods.find(x => x.n === f.n)) nut.foods.push(f); });
+        saveNut();
+      }
       saveLog(log); saveJSON(LKEY, lifts);
       renderProgress(); document.getElementById("backup-msg").textContent = "Backup restored and merged with what was here.";
     }).catch(() => { msg.textContent = "That file isn't a backup from this app. Pick a workout-backup .json file."; });
   }
   document.getElementById("view-progress").addEventListener("click", e => {
     if (e.target.closest('[data-backup="export"]')) exportBackup();
+    const day = e.target.closest("[data-day]");
+    if (day) { showView("fuel"); nutDay = day.dataset.day; renderNutrition(); }
   });
   document.getElementById("view-progress").addEventListener("change", e => {
     if (e.target.id === "import-file" && e.target.files[0]) importBackup(e.target.files[0]);
