@@ -391,6 +391,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 /* player extras */
 .player { position: fixed; }
 .p-top .x[aria-pressed="false"] { color: var(--muted); }
+.dial.switching .big { color: var(--muted); }
 .dial .lead { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ochre); }
 .rest-screen { gap: 14px; }
 .rest-bar { width: min(320px, 100%); height: 8px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
@@ -1374,7 +1375,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     r.items.forEach((it, i) => {
       const [id, sets, amt, unit, side, rest, note] = it;
       for (let s = 1; s <= sets; s++) {
-        (side ? ["Left", "Right"] : [null]).forEach(sd => out.push({ kind: "ex", id, set: s, sets, amt, unit, side: sd, note, item: i }));
+        out.push({ kind: "ex", id, set: s, sets, amt, unit, sides: !!side, note, item: i });
         if (rest && s < sets) out.push({ kind: "rest", secs: rest, item: i });
       }
     });
@@ -1439,7 +1440,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 
   // ---- helpers ----
   function stepDose(st) {
-    return st.unit === "sec" ? st.amt + " seconds" : st.amt + " reps";
+    return (st.unit === "sec" ? st.amt + " seconds" : st.amt + " reps") + (st.sides ? " each side" : "");
   }
   function firstStepOf(i) { return steps.findIndex(s => s.item === i); }
   function lastEntry(id) {
@@ -1479,7 +1480,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   function renderRest(st) {
     const nx = steps[idx + 1];
     const e = nx ? EX[nx.id] : null;
-    const meta = nx ? [nx.sets > 1 ? `Set ${nx.set} of ${nx.sets}` : "", nx.side ? nx.side + " side" : "", stepDose(nx)].filter(Boolean).join(" · ") : "";
+    const meta = nx ? [nx.sets > 1 ? `Set ${nx.set} of ${nx.sets}` : "", stepDose(nx)].filter(Boolean).join(" · ") : "";
     P.innerHTML = topBar(st) + `
       <div class="p-body" data-swipe><div class="rest-screen">
         <p class="eyebrow">Rest</p>
@@ -1494,7 +1495,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           <div><p class="eyebrow">Up next</p><h3>${esc(e.name)}</h3><p class="p-meta">${esc(meta)}</p></div>
         </div>` : ""}
       </div></div>` + actions("Skip rest", "next");
-    if (e) speak("Rest. Next up, " + (nx.set > 1 ? "set " + nx.set + ". " : e.name + ". ") + (nx.side ? nx.side + " side." : ""));
+    if (e) speak("Rest. Next up, " + (nx.set > 1 ? "set " + nx.set + "." : e.name + "."));
     clockStart(st.secs, (left, total) => {
       const c = P.querySelector("[data-count]"); if (c) c.textContent = fmt(left);
       const f = P.querySelector("[data-fill]"); if (f) f.style.width = Math.min(100, (left / total) * 100) + "%";
@@ -1504,7 +1505,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 
   function renderEx(st) {
     const e = EX[st.id], timed = st.unit === "sec", logged = isLogged(st);
-    const meta = [st.sets > 1 ? `Set ${st.set} of ${st.sets}` : "", st.side ? st.side + " side" : "", st.note].filter(Boolean).join(" · ");
+    const meta = [st.sets > 1 ? `Set ${st.set} of ${st.sets}` : "", st.sides ? "Each side" : "", st.note].filter(Boolean).join(" · ");
     let counter;
     if (logged) {
       const prev = lastEntry(st.id);
@@ -1516,7 +1517,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       counter = `
         <div class="logset">
           <div class="field">
-            <label for="in-reps">Reps <span class="tgt">target ${st.amt}</span></label>
+            <label for="in-reps">Reps <span class="tgt">target ${st.amt}${st.sides ? " each side" : ""}</span></label>
             <div class="ctl"><button class="step" data-act="rp-" aria-label="One fewer rep">&minus;</button><input id="in-reps" type="number" inputmode="numeric" min="0" value="${st.amt}"><button class="step" data-act="rp+" aria-label="One more rep">+</button></div>
           </div>
           <div class="field">
@@ -1529,7 +1530,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       counter = `<div class="dial" id="dial"${timed ? ' data-act="toggle" role="button" tabindex="0" aria-label="Tap to start or pause the timer"' : ""}>
           <span class="lead" data-lead hidden>Get set</span>
           <div class="big${timed ? "" : " reps"}" ${timed ? "data-count" : ""}>${timed ? fmt(st.amt) : st.amt}</div>
-          <small>${timed ? "seconds" : "reps"}</small>
+          <small>${timed ? "seconds" : "reps"}${st.sides ? " each side" : ""}</small>
         </div>`;
     }
     P.innerHTML = topBar(st) + `
@@ -1543,25 +1544,33 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           ${VIDEO[st.id] ? '<button class="tool" data-act="video"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Video</button>' : ""}
         </div>
       </div>` + actions(timed ? "Start" : logged ? "Log set" : "Done", timed ? "toggle" : logged ? "log" : "done");
-    const sideTxt = st.side ? st.side + " side. " : "";
-    speak(st.set > 1 || (st.side === "Right") ? (st.set > 1 ? "Set " + st.set + ". " : "") + sideTxt + (timed ? st.amt + " seconds." : "")
-      : e.name + ". " + sideTxt + stepDose(st) + (st.sets > 1 ? ", " + st.sets + " sets." : "."));
+    speak(st.set > 1 ? "Set " + st.set + "." : e.name + ". " + stepDose(st) + (st.sets > 1 ? ", " + st.sets + " sets." : "."));
   }
 
   function runHold(st) {
     const dial = P.querySelector("#dial"), btn = P.querySelector("#main-btn"), lead = P.querySelector("[data-lead]");
-    hold = "lead"; btn.textContent = "Cancel"; btn.classList.add("pause"); lead.hidden = false;
-    const big = P.querySelector("[data-count]");
-    clockStart(3, left => { if (left > 0) { big.textContent = left; beep(600, 0.08); } }, () => {
-      hold = "run"; lead.hidden = true; btn.textContent = "Pause"; dial.classList.add("running"); beep(880, 0.2); buzz(80);
+    const big = P.querySelector("[data-count]"), unitEl = dial.querySelector("small");
+    const phases = st.sides ? [["Left side", st.amt, true], ["Switch sides", 5, false], ["Right side", st.amt, true]] : [["", st.amt, true]];
+    hold = "lead"; btn.textContent = "Cancel"; btn.classList.add("pause"); lead.hidden = false; lead.textContent = "Get set";
+    const runPhase = k => {
+      if (k >= phases.length) { beep(880, 0.35); buzz([200, 100, 200]); session.done++; idx++; return renderStep(); }
+      const [label, secs, work] = phases[k];
+      lead.hidden = !label; lead.textContent = label;
+      dial.classList.toggle("switching", !work); unitEl.textContent = work ? "seconds" : "get into position";
+      if (k > 0) { beep(work ? 880 : 660, 0.2); buzz(work ? 80 : [80, 60, 80]); speak(label); }
       let half = false;
-      clockStart(st.amt, (left, total) => {
+      clockStart(secs, (left, total) => {
         big.textContent = fmt(left);
-        if (!half && total >= 20 && left === Math.floor(total / 2)) { half = true; speak("Halfway"); }
+        if (work && !half && total >= 20 && left === Math.floor(total / 2)) { half = true; speak("Halfway"); }
         if (left > 0 && left <= 3) beep(600, 0.08);
-      }, () => { beep(880, 0.35); buzz([200, 100, 200]); session.done++; idx++; renderStep(); });
+      }, () => runPhase(k + 1));
+    };
+    clockStart(3, left => { if (left > 0) { big.textContent = left; beep(600, 0.08); } }, () => {
+      hold = "run"; btn.textContent = "Pause"; dial.classList.add("running"); beep(880, 0.2); buzz(80);
+      runPhase(0);
     });
   }
+
 
   function openSheet(label, html) {
     closeSheet();
