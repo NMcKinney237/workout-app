@@ -418,6 +418,12 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 .dg-dash { stroke: var(--spruce); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .dg-accent { stroke: var(--ochre); stroke-width: 3; stroke-linecap: round; fill: none; }
 .dg-ball { fill: var(--ochre); }
+.dg-bench { fill: var(--muted); opacity: .7; }
+.dg-dome { fill: var(--ochre-soft); stroke: var(--ochre); stroke-width: 2; }
+.dg-plate { fill: var(--surface-2); stroke: var(--muted); stroke-width: 3; }
+.dg-band { stroke: var(--ochre); stroke-width: 2.5; stroke-linecap: round; }
+.dg-db { stroke: var(--muted); stroke-width: 3; stroke-linecap: round; }
+.dg-dbw { fill: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
@@ -740,37 +746,23 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   let nutReady = false;
 
   // ---------- Media ----------
-  // Photos: free-exercise-db (github.com/yuhonas/free-exercise-db), Unlicense / public domain. Two frames, start and end.
-  const PHOTO = {
-    "hip-flexor": ["kneeling_hip_flexor", ""],
-    "couch-stretch": ["all_fours_quad_stretch", "Similar quad stretch shown"],
-    "glute-bridge": ["pelvic_tilt_into_bridge", ""],
-    "dead-bug": ["dead_bug", ""],
-    "bosu-dead-bug": ["dead_bug", "Floor version shown"],
-    "rkc-plank": ["plank", ""],
-    "bosu-plank": ["plank", "Floor version shown"],
-    "side-plank": ["side_bridge", ""],
-    "reverse-lunge": ["dumbbell_rear_lunge", "Weighted version shown"],
-    "pull-apart": ["band_pull_apart", ""],
-    "face-pull": ["face_pull", "Cable version shown"],
-    "cable-face-pull": ["face_pull", ""],
-    "cat-cow": ["cat_stretch", ""],
-    "childs-pose": ["childs_pose", ""],
-    "levator": ["side_neck_stretch", "Similar neck stretch shown"],
-    "hip-thrust": ["barbell_hip_thrust", ""],
-    "rdl": ["romanian_deadlift", ""],
-    "split-squat": ["split_squat_with_dumbbells", ""],
-    "chest-row": ["dumbbell_incline_row", ""],
-    "pallof": ["pallof_press", ""],
-    "bosu-bridge": ["single_leg_glute_bridge", "Floor version shown"],
-    "ytw": ["lying_rear_delt_raise", "T position shown, on a bench"],
-    "bosu-ytw": ["lying_rear_delt_raise", "T position shown, on a bench"]
-  };
-
-  // Diagrams for exercises without a good open photo. viewBox 200x140, floor at y=127.
+  // Every exercise has a drawn, animated figure. viewBox 200x140, floor at y=127.
+  // A pose maps joint names to [x, y]. Later poses only list what changes from the first. 2+ poses cycle in order.
   const SIDE = [["S", "H"], ["S", "P"], ["S", "E"], ["E", "W"], ["P", "K"], ["K", "A"], ["A", "T"]];
   const FAR = [["S", "E2"], ["E2", "W2"], ["P", "K2"], ["K2", "A2"], ["A2", "T2"]];
+  const FRONT = [["N", "H"], ["N", "P"], ["SL", "SR"], ["SL", "EL"], ["EL", "WL"], ["SR", "ER"], ["ER", "WR"], ["PL", "PR"], ["PL", "KL"], ["KL", "AL"], ["PR", "KR"], ["KR", "AR"]];
+  const SPINE = [["S", "H"], ["S", "M"], ["M", "P"], ["S", "E"], ["E", "W"], ["P", "K"], ["K", "A"], ["A", "T"]];
   const supine = { S: [62, 118], P: [112, 118], K: [134, 96], A: [152, 122], T: [162, 124], E: [84, 121], W: [104, 122] };
+  const frontBody = { H: [100, 24], N: [100, 38], SL: [84, 44], SR: [116, 44], P: [100, 90], PL: [92, 90], PR: [108, 90], KL: [91, 108], AL: [90, 126], KR: [109, 108], AR: [110, 126] };
+  const proneTop = { H: [100, 26], N: [100, 38], SL: [86, 42], SR: [114, 42], P: [100, 86], PL: [94, 86], PR: [106, 86], KL: [93, 106], AL: [92, 126], KR: [107, 106], AR: [108, 126], EL: [76, 26], WL: [66, 10], ER: [124, 26], WR: [134, 10] };
+  const deadBugA = { H: [44, 116], S: [60, 118], P: [104, 118], E: [60, 98], W: [60, 78], E2: [62, 98], W2: [62, 78], K: [104, 88], A: [130, 88], T: [132, 80], K2: [106, 88], A2: [132, 88], T2: [134, 80] };
+  const deadBugB = { E: [42, 112], W: [24, 108], K2: [134, 110], A2: [160, 116], T2: [164, 110] };
+  const lift = (o, dy) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, [v[0], v[1] + dy]]));
+  const facePull = { props: ["floor", ["line", 26, 10, 26, 127], ["ball", 26, 32, 4]], attach: [["band", "W", "X"]], note: "Pull toward your forehead, elbows high",
+    poses: [{ H: [98, 26], S: [102, 44], P: [102, 86], K: [102, 106], A: [102, 126], T: [92, 126], E: [82, 40], W: [62, 36], X: [26, 32] }, { E: [118, 36], W: [90, 28] }] };
+  const ytwTop = { props: [["rect", 30, 2, 140, 132, "dg-mat"]], segs: FRONT, note: "View from above: Y, then T, then W",
+    poses: [proneTop, { EL: [66, 42], WL: [46, 42], ER: [134, 42], WR: [154, 42] }, { EL: [72, 58], WL: [76, 40], ER: [128, 58], WR: [124, 40] }] };
+
   const DIAG = {
     "chin-tuck": { props: ["floor", ["dash", 100, 6, 100, 127]], note: "Ear moves back over the shoulder",
       poses: [{ H: [114, 28], S: [100, 48], E: [105, 67], W: [110, 85], P: [100, 90], K: [100, 108], A: [100, 125], T: [110, 125] }, { H: [102, 26] }] },
@@ -778,8 +770,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       poses: [Object.assign({ H: [46, 116] }, supine), { H: [49, 106] }] },
     "thoracic-chair": { props: ["floor", ["line", 78, 96, 118, 96], ["line", 80, 96, 80, 127], ["line", 116, 96, 116, 127], ["line", 78, 96, 78, 64]], note: "Arch over the backrest",
       poses: [{ P: [90, 92], S: [92, 54], H: [96, 38], E: [110, 40], W: [98, 32], K: [124, 92], A: [126, 125], T: [136, 125] }, { S: [80, 58], H: [75, 43], E: [96, 38], W: [83, 34] }] },
-    "wall-angel": { props: [["rect", 50, 0, 100, 127, "dg-wall"], "floor"], note: "Front view, back against the wall",
-      segs: [["N", "H"], ["N", "P"], ["SL", "SR"], ["SL", "EL"], ["EL", "WL"], ["SR", "ER"], ["ER", "WR"], ["PL", "PR"], ["PL", "KL"], ["KL", "AL"], ["PR", "KR"], ["KR", "AR"]],
+    "wall-angel": { props: [["rect", 50, 0, 100, 127, "dg-wall"], "floor"], note: "Front view, back against the wall", segs: FRONT,
       poses: [{ H: [100, 26], N: [100, 40], SL: [84, 46], SR: [116, 46], P: [100, 90], PL: [92, 90], PR: [108, 90], KL: [91, 108], AL: [90, 125], KR: [109, 108], AR: [110, 125], EL: [66, 46], WL: [66, 24], ER: [134, 46], WR: [134, 24] },
               { EL: [74, 24], WL: [88, 6], ER: [126, 24], WR: [112, 6] }] },
     "doorway-pec": { props: ["floor", ["line", 110, 4, 110, 127]], note: "Elbow stays on the frame as you step through",
@@ -799,16 +790,70 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       poses: [{ H: [104, 28], S: [100, 46], L: [93, 70], P: [100, 90], K: [102, 108], A: [100, 125], T: [110, 125], E: [100, 66], W: [102, 86], B1: [89, 82], B2: [113, 91] },
               { L: [98, 70], K: [101, 108], B1: [89, 89], B2: [113, 84] }] },
     "suboccipital": { props: ["floor", ["ball", 44, 123, 3.5], ["ball", 49, 123, 3.5]], note: "Small nods on the balls",
-      poses: [Object.assign({ H: [44, 111] }, supine), { H: [47, 110] }] }
+      poses: [Object.assign({ H: [44, 111] }, supine), { H: [47, 110] }] },
+
+    "hip-flexor": { props: ["floor"], accent: [["B1", "B2"]], note: "Tuck the pelvis first, then shift forward an inch",
+      poses: [{ H: [92, 38], S: [90, 54], P: [90, 96], K: [118, 96], A: [118, 126], T: [128, 126], K2: [82, 126], A2: [54, 126], T2: [50, 121], E: [86, 34], W: [84, 14], B1: [80, 90], B2: [100, 98] },
+              { H: [98, 38], S: [96, 54], P: [96, 96], K: [124, 98], E: [92, 34], W: [90, 14], B1: [86, 96], B2: [106, 92] }] },
+    "couch-stretch": { props: ["floor", ["line", 44, 60, 44, 127]], accent: [["B1", "B2"]], note: "Back shin up the wall, glute squeezed, sit up tall",
+      poses: [{ H: [122, 60], S: [108, 70], P: [76, 98], K: [106, 98], A: [106, 126], T: [116, 126], K2: [56, 126], A2: [50, 96], T2: [45, 91], E: [110, 84], W: [106, 96], B1: [64, 92], B2: [88, 100] },
+              { H: [84, 38], S: [82, 54], P: [80, 96], E: [94, 74], W: [86, 92], B1: [68, 98], B2: [92, 92] }] },
+    "glute-bridge": { props: ["floor"], note: "Tuck the pelvis, then drive the hips up",
+      poses: [{ H: [44, 116], S: [60, 118], P: [108, 118], K: [132, 96], A: [150, 122], T: [160, 124], E: [80, 121], W: [100, 122] }, { P: [104, 100], K: [136, 92] }] },
+    "hip-thrust": { props: ["floor", ["bench", 14, 96, 48]], attach: [["plate", "P"]], note: "Shoulders on the bench, chin tucked, hips level at the top",
+      poses: [{ H: [46, 84], S: [60, 94], P: [92, 118], K: [124, 100], A: [128, 126], T: [138, 126], E: [74, 106], W: [90, 112] },
+              { H: [46, 90], P: [100, 92], K: [130, 94], E: [78, 96], W: [98, 90] }] },
+    "dead-bug": { props: ["floor"], note: "Opposite arm and leg lower slowly, low back stays down", poses: [deadBugA, deadBugB] },
+    "bosu-dead-bug": { props: ["floor", ["dome", 82, 20]], note: "Same move with the Bosu under your back", poses: [lift(deadBugA, -12), lift(deadBugB, -12)] },
+    "rkc-plank": { props: ["floor"], accent: [["B1", "B2"]], note: "Squeeze glutes hard and tuck the pelvis",
+      poses: [{ H: [140, 98], S: [126, 104], E: [126, 126], W: [146, 126], P: [76, 108], K: [50, 113], A: [24, 118], T: [22, 126], B1: [68, 100], B2: [84, 112] },
+              { P: [76, 105], B1: [70, 102], B2: [84, 108] }] },
+    "bosu-plank": { props: ["floor", ["dome", 128, 18]], note: "Forearms on the dome, body in one straight line",
+      poses: [{ H: [140, 90], S: [126, 94], E: [126, 109], W: [144, 109], P: [76, 104], K: [50, 111], A: [24, 118], T: [22, 126] }, { P: [76, 101] }] },
+    "side-plank": { props: ["floor"], note: "Lift the hips into one straight line",
+      poses: [{ H: [40, 96], S: [56, 104], E: [56, 126], W: [76, 126], P: [110, 122], K: [140, 124], A: [168, 126], T: [172, 120], E2: [82, 104], W2: [106, 118] },
+              { H: [38, 98], P: [110, 114], K: [140, 120], E2: [82, 96], W2: [106, 110] }] },
+    "reverse-lunge": { props: ["floor"], note: "Step back and lower, front foot stays planted",
+      poses: [{ H: [102, 10], S: [100, 26], P: [100, 68], K: [102, 97], A: [100, 126], T: [110, 126], K2: [100, 97], A2: [98, 126], T2: [108, 126], E: [100, 46], W: [102, 66] },
+              { H: [88, 32], S: [84, 48], P: [80, 90], K: [102, 98], K2: [66, 122], A2: [40, 124], T2: [34, 126], E: [84, 68], W: [86, 88] }] },
+    "split-squat": { props: ["floor", ["bench", 30, 92, 34]], attach: [["db", "W"]], note: "Back foot on the bench, drop straight down",
+      poses: [{ H: [100, 10], S: [98, 26], P: [96, 68], K: [112, 96], A: [114, 126], T: [124, 126], K2: [86, 96], A2: [60, 92], T2: [52, 94], E: [98, 46], W: [98, 66] },
+              { H: [104, 34], S: [100, 50], P: [96, 92], K: [122, 100], K2: [84, 118], E: [100, 70], W: [100, 90] }] },
+    "rdl": { props: ["floor"], attach: [["db", "W"]], note: "Hips push back, back stays flat",
+      poses: [{ H: [101, 26], S: [98, 44], P: [98, 86], K: [100, 106], A: [98, 126], T: [110, 126], E: [99, 64], W: [101, 84] },
+              { H: [130, 54], S: [116, 64], P: [84, 82], K: [94, 104], E: [116, 84], W: [116, 104] }] },
+    "chest-row": { props: ["floor", ["line", 72, 114, 128, 77], ["line", 84, 106, 84, 127], ["line", 106, 92, 106, 127]], attach: [["db", "W"]], note: "Chest on the bench, elbow drives back",
+      poses: [{ H: [130, 70], S: [116, 80], P: [80, 104], K: [56, 114], A: [34, 126], T: [42, 126], E: [118, 100], W: [120, 118] }, { E: [98, 70], W: [100, 90] }] },
+    "pull-apart": { props: ["floor"], segs: FRONT, attach: [["band", "WL", "WR"]], note: "Arms straight, pull the band to your chest",
+      poses: [Object.assign({}, frontBody, { EL: [88, 48], WL: [96, 50], ER: [112, 48], WR: [104, 50] }), { EL: [64, 45], WL: [44, 46], ER: [136, 45], WR: [156, 46] }] },
+    "face-pull": facePull,
+    "cable-face-pull": facePull,
+    "pallof": { props: [["rect", 40, 4, 150, 130, "dg-mat"], ["ball", 14, 58, 5], ["line", 86, 30, 86, 16], ["line", 114, 30, 114, 16]], segs: [["SL", "SR"], ["PL", "PR"], ["SL", "EL"], ["EL", "WL"], ["SR", "ER"], ["ER", "WR"]],
+      attach: [["band", "WL", "X"]], note: "View from above: press straight out, don't let the band turn you",
+      poses: [{ H: [100, 50], SL: [70, 52], SR: [130, 52], PL: [84, 40], PR: [116, 40], EL: [78, 76], WL: [96, 70], ER: [122, 76], WR: [104, 70], X: [14, 58] },
+              { EL: [92, 86], WL: [98, 118], ER: [108, 86], WR: [102, 118] }] },
+    "cat-cow": { props: ["floor"], segs: SPINE, note: "Round up, then let the chest drop",
+      poses: [{ H: [124, 98], S: [112, 84], M: [89, 70], P: [66, 84], E: [112, 105], W: [112, 126], K: [66, 126], A: [40, 126], T: [36, 122] }, { H: [126, 72], M: [89, 94] }] },
+    "childs-pose": { props: ["floor"], segs: SPINE, note: "Sit back toward the heels, arms long",
+      poses: [{ H: [126, 78], S: [112, 84], M: [89, 82], P: [66, 84], E: [112, 105], W: [112, 126], K: [66, 126], A: [40, 126], T: [36, 124] },
+              { H: [110, 116], S: [96, 110], M: [72, 102], P: [46, 106], E: [118, 122], W: [140, 124] }] },
+    "levator": { props: ["floor"], segs: FRONT, note: "Nose toward the armpit, then a gentle pull",
+      poses: [Object.assign({}, frontBody, { EL: [80, 64], WL: [82, 84], ER: [120, 64], WR: [118, 84] }), { H: [89, 33], ER: [118, 26], WR: [96, 22], WL: [80, 90] }] },
+    "ytw": ytwTop,
+    "bosu-ytw": Object.assign({}, ytwTop, { props: [["rect", 30, 2, 140, 132, "dg-mat"], ["disc", 100, 80, 22]], note: "View from above, hips over the Bosu: Y, T, W" }),
+    "bosu-bridge": { props: ["floor", ["dome", 150, 16]], note: "One heel on the dome, other knee pulled in",
+      poses: [{ H: [44, 116], S: [60, 118], P: [108, 118], K: [132, 92], A: [150, 111], T: [156, 105], E: [80, 121], W: [100, 122], K2: [112, 90], A2: [96, 96], T2: [92, 90] },
+              { P: [106, 100], K: [134, 88], K2: [110, 72], A2: [94, 78], T2: [90, 72] }] }
   };
 
-  function lerpPose(d, t) {
-    const a = d.poses[0], b = Object.assign({}, a, d.poses[1] || {}), out = {};
-    for (const k in b) out[k] = b[k].map((v, i) => (a[k] ? a[k][i] : v) + (v - (a[k] ? a[k][i] : v)) * t);
+  function poseAt(d, a, b, t) {
+    const base = d.poses[0], pa = Object.assign({}, base, d.poses[a]), pb = Object.assign({}, base, d.poses[b]), out = {};
+    for (const k in pa) out[k] = pa[k].map((v, i) => v + ((pb[k] ? pb[k][i] : v) - v) * t);
     return out;
   }
-  function drawDiag(svg, d, t) {
-    const P = lerpPose(d, t);
+  const f1 = v => (+v).toFixed(1);
+  function drawDiag(svg, d, a, b, t) {
+    const P = poseAt(d, a, b, t);
     let h = "";
     (d.props || []).forEach(p => {
       if (p === "floor") h += '<line class="dg-floor" x1="0" y1="127" x2="200" y2="127"/>';
@@ -816,26 +861,35 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       else if (p[0] === "dash") h += `<line class="dg-dash" x1="${p[1]}" y1="${p[2]}" x2="${p[3]}" y2="${p[4]}"/>`;
       else if (p[0] === "rect") h += `<rect class="${p[5]}" x="${p[1]}" y="${p[2]}" width="${p[3]}" height="${p[4]}" rx="4"/>`;
       else if (p[0] === "ball") h += `<circle class="dg-ball" cx="${p[1]}" cy="${p[2]}" r="${p[3]}"/>`;
+      else if (p[0] === "bench") h += `<rect class="dg-bench" x="${p[1]}" y="${p[2]}" width="${p[3]}" height="6" rx="2"/><line class="dg-prop" x1="${p[1] + 5}" y1="${p[2] + 6}" x2="${p[1] + 5}" y2="127"/><line class="dg-prop" x1="${p[1] + p[3] - 5}" y1="${p[2] + 6}" x2="${p[1] + p[3] - 5}" y2="127"/>`;
+      else if (p[0] === "dome") h += `<path class="dg-dome" d="M${p[1] - p[2]} 127 A${p[2]} ${p[2]} 0 0 1 ${p[1] + p[2]} 127 Z"/>`;
+      else if (p[0] === "disc") h += `<circle class="dg-dome" cx="${p[1]}" cy="${p[2]}" r="${p[3]}"/>`;
     });
-    const seg = (pair, cls) => (P[pair[0]] && P[pair[1]]) ? `<line class="${cls}" x1="${P[pair[0]][0].toFixed(1)}" y1="${P[pair[0]][1].toFixed(1)}" x2="${P[pair[1]][0].toFixed(1)}" y2="${P[pair[1]][1].toFixed(1)}"/>` : "";
+    const at = d.attach || [];
+    at.filter(x => x[0] === "plate" && P[x[1]]).forEach(x => h += `<circle class="dg-plate" cx="${f1(P[x[1]][0])}" cy="${f1(P[x[1]][1])}" r="14"/>`);
+    const seg = (pair, cls) => (P[pair[0]] && P[pair[1]]) ? `<line class="${cls}" x1="${f1(P[pair[0]][0])}" y1="${f1(P[pair[0]][1])}" x2="${f1(P[pair[1]][0])}" y2="${f1(P[pair[1]][1])}"/>` : "";
     FAR.forEach(s => h += seg(s, "dg-far"));
     (d.segs || SIDE).forEach(s => h += seg(s, "dg-body"));
     (d.accent || []).forEach(s => h += seg(s, "dg-accent"));
-    if (P.ell) h += `<ellipse class="dg-accent" cx="${P.ell[0].toFixed(1)}" cy="${P.ell[1].toFixed(1)}" rx="${P.ell[2].toFixed(1)}" ry="${P.ell[3].toFixed(1)}"/>`;
-    if (P.H) h += `<circle class="dg-head" cx="${P.H[0].toFixed(1)}" cy="${P.H[1].toFixed(1)}" r="8"/>`;
+    at.filter(x => x[0] === "band").forEach(x => h += seg([x[1], x[2]], "dg-band"));
+    at.filter(x => x[0] === "db" && P[x[1]]).forEach(x => {
+      const [cx, cy] = P[x[1]];
+      h += `<line class="dg-db" x1="${f1(cx - 7)}" y1="${f1(cy)}" x2="${f1(cx + 7)}" y2="${f1(cy)}"/><rect class="dg-dbw" x="${f1(cx - 10)}" y="${f1(cy - 4)}" width="4" height="8" rx="1"/><rect class="dg-dbw" x="${f1(cx + 6)}" y="${f1(cy - 4)}" width="4" height="8" rx="1"/>`;
+    });
+    if (P.ell) h += `<ellipse class="dg-accent" cx="${f1(P.ell[0])}" cy="${f1(P.ell[1])}" rx="${f1(P.ell[2])}" ry="${f1(P.ell[3])}"/>`;
+    if (P.H) h += `<circle class="dg-head" cx="${f1(P.H[0])}" cy="${f1(P.H[1])}" r="8"/>`;
     svg.innerHTML = h;
   }
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+  const SEG_MS = 2100; // per pose: hold 30%, then move to the next pose
   function diagLoop(now) {
-    let t;
-    if (reduceMotion) t = Math.floor(now / 2200) % 2;
-    else {
-      const ph = (now % 4200) / 4200;
-      t = ph < .15 ? 0 : ph < .5 ? ease((ph - .15) / .35) : ph < .65 ? 1 : 1 - ease((ph - .65) / .35);
-    }
     document.querySelectorAll("svg[data-diag]").forEach(svg => {
-      if (svg.getClientRects().length) drawDiag(svg, DIAG[svg.dataset.diag], t);
+      if (!svg.getClientRects().length) return;
+      const d = DIAG[svg.dataset.diag], n = d.poses.length;
+      const ph = (now % (SEG_MS * n)) / SEG_MS, a = Math.floor(ph), local = ph - a, b = (a + 1) % n;
+      if (reduceMotion) drawDiag(svg, d, a, a, 0);
+      else drawDiag(svg, d, a, b, local < .3 ? 0 : ease((local - .3) / .7));
     });
     requestAnimationFrame(diagLoop);
   }
@@ -889,23 +943,15 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     const id = btn.dataset.video, v = VIDEO[id], fig = btn.closest(".media"), slot = fig.querySelector(".video-slot");
     if (slot.childElementCount) { slot.innerHTML = ""; slot.hidden = true; btn.setAttribute("aria-expanded", "false"); btn.lastChild.textContent = "Show video"; return; }
     slot.hidden = false; btn.setAttribute("aria-expanded", "true"); btn.lastChild.textContent = "Hide video";
-    if (!navigator.onLine) { slot.innerHTML = '<p class="vid-off">Videos need a connection. Photos and cues work offline.</p>'; return; }
+    if (!navigator.onLine) { slot.innerHTML = '<p class="vid-off">Videos need a connection. The figures and cues work offline.</p>'; return; }
     slot.className = "video-slot" + (v.short ? " short" : "");
     slot.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?playsinline=1&rel=0" title="${esc(v.title)}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
       <p class="vid-cred">${esc(v.title)} &middot; ${esc(v.channel)}</p>`;
   }
   document.addEventListener("click", e => { const b = e.target.closest("[data-video]"); if (b) { e.stopPropagation(); toggleVideo(b); } }, true);
-  function mediaHTML(id, lazy) {
-    const ld = lazy ? ' loading="lazy"' : "";
+  function mediaHTML(id) {
     const e = EX[id];
     const link = videoControl(id);
-    if (PHOTO[id]) {
-      const [f, cap] = PHOTO[id];
-      return `<figure class="media"><div class="frame">
-          <img src="img/${f}_0.jpg" alt="${esc(e.name)}, start position"${ld}>
-          <img class="f2" src="img/${f}_1.jpg" alt="${esc(e.name)}, end position"${ld}>
-        </div><figcaption><span>${esc(cap || "Start and end position")}</span>${link}</figcaption><div class="video-slot" hidden></div></figure>`;
-    }
     if (DIAG[id]) {
       return `<figure class="media"><div class="frame">
           <svg viewBox="0 0 200 140" data-diag="${id}" role="img" aria-label="Animated diagram: ${esc(e.name)}"></svg>
@@ -1164,7 +1210,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       <div class="list">
         ${list.map(([id, e]) => `<details class="ex" id="ex-${id}">
           <summary><h3>${esc(e.name)}</h3><small>${esc(e.target)}</small><span class="plus" aria-hidden="true">+</span></summary>
-          <div class="ex-body">${mediaHTML(id, true)}${formHTML(e)}</div>
+          <div class="ex-body">${mediaHTML(id)}${formHTML(e)}</div>
         </details>`).join("")}
       </div>`;
   }
@@ -1231,7 +1277,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           <li>Use the list button to jump to any exercise. Rest can be shortened or extended by 15 seconds.</li>
         </ul>
       </div>
-      <p class="note">Photos from free-exercise-db (public domain). Diagrams drawn for this app. "Watch form videos" opens a YouTube search.</p>
+      <p class="note">Figures drawn for this app. "Show video" plays a short form demo from YouTube and needs a connection.</p>
       <p class="note">General fitness guidance, not medical advice. Stop any exercise that causes sharp pain, numbness or tingling, and see a physical therapist if pain persists.</p>`;
   }
 
@@ -1456,9 +1502,6 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
         ${formHTML(e)}
         ${upNext ? `<p class="note">After this: ${esc(upNext)}</p>` : ""}
       </div>` + actions(timed ? "Start" : logged ? "Log set" : "Done, next", timed ? "toggle" : logged ? "log" : "done");
-    for (let j = idx + 1; j < steps.length; j++) {
-      if (steps[j].kind === "ex" && steps[j].id !== st.id) { const ph = PHOTO[steps[j].id]; if (ph) { new Image().src = "img/" + ph[0] + "_0.jpg"; new Image().src = "img/" + ph[0] + "_1.jpg"; } break; }
-    }
     const sideTxt = st.side ? st.side + " side. " : "";
     speak(st.set > 1 || (st.side === "Right") ? (st.set > 1 ? "Set " + st.set + ". " : "") + sideTxt + (timed ? st.amt + " seconds." : "")
       : e.name + ". " + sideTxt + stepDose(st) + (st.sets > 1 ? ", " + st.sets + " sets." : "."));
