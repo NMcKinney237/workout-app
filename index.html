@@ -355,6 +355,39 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 .video-slot.short iframe { aspect-ratio: 9 / 16; width: min(100%, 340px); max-height: 70vh; align-self: center; }
 .vid-cred, .vid-off { margin: 0; font-size: 12px; color: var(--muted); }
 
+/* player v2 */
+.player { overflow: hidden; }
+.segs { display: flex; gap: 4px; padding-block: 2px 4px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.seg-b { flex: 1; height: 8px; border: 0; padding: 0; border-radius: 4px; background: var(--surface-2); position: relative; }
+.seg-b::before { content: ""; position: absolute; inset: -10px 0; }
+.seg-b.done { background: var(--spruce); }
+.seg-b.cur { background: var(--ochre); }
+.p-body { gap: 14px; padding-block: 12px; overscroll-behavior: contain; }
+.ex-head { display: flex; flex-direction: column; gap: 2px; }
+.p-name { font-size: 26px; }
+.p-meta { margin: 0; color: var(--muted); font-size: 14px; font-weight: 600; }
+.p-fig { width: min(100%, calc(32vh * 1.5)); align-self: center; flex: none; }
+.dial { padding: 0; }
+.dial .big { font-size: 56px; }
+.cue { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+.cue b { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--spruce); }
+.p-tools { display: flex; gap: 8px; }
+.tool { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; min-height: 40px; font-size: 14px; font-weight: 600; }
+.tgt { font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--spruce); }
+.p-actions { grid-template-columns: auto 1fr auto; align-items: center; }
+.nav-t { display: inline-flex; align-items: center; gap: 2px; height: 52px; padding: 0 10px; border: 0; background: none; font-weight: 700; font-size: 15px; }
+.nav-t:disabled { opacity: .3; }
+.upnext { flex-direction: row; align-items: center; gap: 12px; }
+.un-fig { width: 96px; flex: none; }
+.sheet-head { display: flex; justify-content: flex-end; align-items: center; position: relative; margin-bottom: 4px; }
+.sheet-head .grab { position: absolute; left: 50%; top: 2px; transform: translateX(-50%); width: 40px; height: 5px; border-radius: 3px; background: var(--line); }
+.sheet-head .x { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.sheet-title { font-size: 22px; margin-bottom: 10px; }
+.sheet-body { display: flex; flex-direction: column; gap: 14px; }
+.sheet .video-slot { margin-top: 4px; }
+.sound-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 12px 4px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); text-align: left; font-weight: 600; }
+.sound-row b { font-family: var(--f-mono); color: var(--spruce); padding-right: 6px; }
+
 /* player extras */
 .player { position: fixed; }
 .p-top .x[aria-pressed="false"] { color: var(--muted); }
@@ -883,17 +916,28 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
   const SEG_MS = 2100; // per pose: hold 30%, then move to the next pose
-  function diagLoop(now) {
-    document.querySelectorAll("svg[data-diag]").forEach(svg => {
-      if (!svg.getClientRects().length) return;
-      const d = DIAG[svg.dataset.diag], n = d.poses.length;
-      const ph = (now % (SEG_MS * n)) / SEG_MS, a = Math.floor(ph), local = ph - a, b = (a + 1) % n;
-      if (reduceMotion) drawDiag(svg, d, a, a, 0);
-      else drawDiag(svg, d, a, b, local < .3 ? 0 : ease((local - .3) / .7));
-    });
-    requestAnimationFrame(diagLoop);
+  const liveDiags = new Set();
+  let diagRunning = false, lastDraw = 0;
+  function mountDiags(root) {
+    root.querySelectorAll("svg[data-diag]").forEach(svg => liveDiags.add(svg));
+    if (!diagRunning && liveDiags.size) { diagRunning = true; requestAnimationFrame(diagLoop); }
   }
-  requestAnimationFrame(diagLoop);
+  function diagLoop(now) {
+    if (now - lastDraw >= 33) {
+      lastDraw = now;
+      const playerOpen = !document.getElementById("player").hidden;
+      liveDiags.forEach(svg => {
+        if (!svg.isConnected) { liveDiags.delete(svg); return; }
+        if (playerOpen && !svg.closest("#player")) return;
+        if (svg.closest("details:not([open])") || svg.closest("[hidden]")) return;
+        const d = DIAG[svg.dataset.diag], n = d.poses.length;
+        const ph = (now % (SEG_MS * n)) / SEG_MS, a = Math.floor(ph), local = ph - a;
+        if (reduceMotion) { if (svg.__pose !== a) { svg.__pose = a; drawDiag(svg, d, a, a, 0); } return; }
+        drawDiag(svg, d, a, (a + 1) % n, local < .3 ? 0 : ease((local - .3) / .7));
+      });
+    }
+    if (liveDiags.size) requestAnimationFrame(diagLoop); else diagRunning = false;
+  }
 
   function videoURL(name) { return "https://www.youtube.com/results?search_query=" + encodeURIComponent(name + " exercise form"); }
 
@@ -1297,6 +1341,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
   document.querySelector(".tabbar").addEventListener("click", e => {
     const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view);
   });
+  document.getElementById("view-library").addEventListener("toggle", e => { if (e.target.open) mountDiags(e.target); }, true);
   document.getElementById("view-library").addEventListener("click", e => {
     const b = e.target.closest("[data-filter]"); if (b) { filter = b.dataset.filter; renderLibrary(); }
   });
@@ -1385,7 +1430,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     routine = R[id]; steps = buildSteps(routine); idx = 0; hold = "idle"; clockStop();
     session = { start: Date.now(), sets: 0, done: 0, volume: 0, lifts: {} };
     P.hidden = false; document.body.style.overflow = "hidden";
-    lockScreen(); beep(520, 0.05); renderStep();
+    lockScreen(); renderStep();
   }
   function closePlayer() {
     clockStop(); unlockScreen(); try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
@@ -1402,36 +1447,41 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     return list[list.length - 1] || null;
   }
   function topBar(st) {
-    const n = routine.items.length;
+    const n = routine.items.length, cur = st ? st.item : n;
+    const segs = routine.items.map((it, i) => `<button class="seg-b${i < cur ? " done" : i === cur ? " cur" : ""}" data-jump="${i}" aria-label="Go to ${esc(EX[it[0]].name)}"></button>`).join("");
     return `
       <div class="p-top">
         <button class="x" data-act="close" aria-label="End workout">${icon.x}</button>
-        <div class="t"><div id="p-title">${esc(routine.name)}</div><small>${st ? `Exercise ${st.item + 1} of ${n}` : ""}</small></div>
-        <button class="x" data-act="voice" aria-pressed="${prefs.sound}" aria-label="Sound ${prefs.sound ? "on" : "off"}">${prefs.sound ? icons2.voiceOn : icons2.voiceOff}</button>
-        <button class="x" data-act="list" aria-label="All exercises in this routine">${icons2.list}</button>
+        <div class="t"><div id="p-title">${esc(routine.name)}</div><small>${st ? `Exercise ${st.item + 1} of ${n}` : "Complete"}</small></div>
+        <button class="x" data-act="list" aria-label="All exercises and sound">${icons2.list}</button>
       </div>
-      <div class="progress" aria-hidden="true"><i style="width:${Math.round((idx / steps.length) * 100)}%"></i></div>`;
+      <div class="segs" role="group" aria-label="Exercises">${segs}</div>`;
   }
   function actions(mainLabel, mainAct, mainCls) {
     return `<div class="p-actions">
-        <button class="nav" data-act="prev" aria-label="Previous" ${idx === 0 ? "disabled" : ""}>${icon.prev}</button>
+        <button class="nav-t" data-act="prev" ${idx === 0 ? "disabled" : ""}>${icon.prev}<span>Back</span></button>
         <button class="main ${mainCls || ""}" data-act="${mainAct}" id="main-btn">${mainLabel}</button>
-        <button class="nav" data-act="next" aria-label="Skip">${icon.next}</button>
+        <button class="nav-t" data-act="next"><span>Next</span>${icon.next}</button>
       </div>`;
+  }
+  function figureHTML(id) {
+    return `<div class="frame p-fig"><svg viewBox="0 0 200 140" data-diag="${id}" role="img" aria-label="Animated figure: ${esc(EX[id].name)}"></svg></div>`;
   }
 
   // ---- render ----
   function renderStep() {
     hold = "idle";
     if (idx >= steps.length) return renderFinish();
-    return steps[idx].kind === "rest" ? renderRest(steps[idx]) : renderEx(steps[idx]);
+    steps[idx].kind === "rest" ? renderRest(steps[idx]) : renderEx(steps[idx]);
+    mountDiags(P);
   }
 
   function renderRest(st) {
     const nx = steps[idx + 1];
     const e = nx ? EX[nx.id] : null;
+    const meta = nx ? [nx.sets > 1 ? `Set ${nx.set} of ${nx.sets}` : "", nx.side ? nx.side + " side" : "", stepDose(nx)].filter(Boolean).join(" · ") : "";
     P.innerHTML = topBar(st) + `
-      <div class="p-body"><div class="rest-screen">
+      <div class="p-body" data-swipe><div class="rest-screen">
         <p class="eyebrow">Rest</p>
         <div class="big" data-count>${fmt(st.secs)}</div>
         <div class="rest-bar" aria-hidden="true"><i data-fill style="width:100%"></i></div>
@@ -1440,13 +1490,8 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           <button class="pill-btn" data-act="plus15">+15s</button>
         </div>
         ${e ? `<div class="upnext">
-          <p class="eyebrow">Up next</p>
-          <h3>${esc(e.name)}</h3>
-          <div class="p-sub">
-            ${nx.sets > 1 ? `<span class="chip">Set ${nx.set} of ${nx.sets}</span>` : ""}
-            ${nx.side ? `<span class="chip side-tag">${nx.side} side</span>` : ""}
-            <span class="chip">${stepDose(nx)}</span>
-          </div>
+          <div class="frame un-fig"><svg viewBox="0 0 200 140" data-diag="${nx.id}" aria-hidden="true"></svg></div>
+          <div><p class="eyebrow">Up next</p><h3>${esc(e.name)}</h3><p class="p-meta">${esc(meta)}</p></div>
         </div>` : ""}
       </div></div>` + actions("Skip rest", "next");
     if (e) speak("Rest. Next up, " + (nx.set > 1 ? "set " + nx.set + ". " : e.name + ". ") + (nx.side ? nx.side + " side." : ""));
@@ -1459,49 +1504,45 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 
   function renderEx(st) {
     const e = EX[st.id], timed = st.unit === "sec", logged = isLogged(st);
-    let logBlock = "";
+    const meta = [st.sets > 1 ? `Set ${st.set} of ${st.sets}` : "", st.side ? st.side + " side" : "", st.note].filter(Boolean).join(" · ");
+    let counter;
     if (logged) {
       const prev = lastEntry(st.id);
       const mine = session.lifts[st.id] || [];
       const lastSet = mine[mine.length - 1];
       const prevSet = prev ? (prev.sets[st.set - 1] || prev.sets[prev.sets.length - 1]) : null;
       const w = lastSet ? lastSet.w : prevSet ? prevSet.w : "";
-      const r = st.amt;
       const step = prefs.unit === "kg" ? 2.5 : 5;
-      logBlock = `
-        ${prev ? `<p class="last">Last time (${esc(prev.d.slice(5).replace("-", "/"))}): <b>${prev.sets.map(x => x.r + " x " + x.w).join(", ")}</b> ${esc(prev.u)}</p>` : `<p class="last">First time logging this. Pick a weight that leaves about 2 reps in the tank.</p>`}
+      counter = `
         <div class="logset">
           <div class="field">
-            <label for="in-reps">Reps</label>
-            <div class="ctl"><button class="step" data-act="rp-" aria-label="One fewer rep">&minus;</button><input id="in-reps" type="number" inputmode="numeric" min="0" value="${r}"><button class="step" data-act="rp+" aria-label="One more rep">+</button></div>
+            <label for="in-reps">Reps <span class="tgt">target ${st.amt}</span></label>
+            <div class="ctl"><button class="step" data-act="rp-" aria-label="One fewer rep">&minus;</button><input id="in-reps" type="number" inputmode="numeric" min="0" value="${st.amt}"><button class="step" data-act="rp+" aria-label="One more rep">+</button></div>
           </div>
           <div class="field">
             <label for="in-wt"><span>Weight</span><button class="unit-btn" data-act="unit" aria-label="Switch units">${prefs.unit}</button></label>
             <div class="ctl"><button class="step" data-act="wt-" data-step="${step}" aria-label="Less weight">&minus;</button><input id="in-wt" type="number" inputmode="decimal" min="0" step="${step}" value="${w}" placeholder="0"><button class="step" data-act="wt+" data-step="${step}" aria-label="More weight">+</button></div>
           </div>
-        </div>`;
-    }
-    const upNext = (() => { for (let j = idx + 1; j < steps.length; j++) if (steps[j].kind === "ex" && steps[j].id !== st.id) return EX[steps[j].id].name; return null; })();
-    P.innerHTML = topBar(st) + `
-      <div class="p-body">
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <h2 class="p-name">${esc(e.name)}</h2>
-          <div class="p-sub">
-            ${st.sets > 1 ? `<span class="chip">Set ${st.set} of ${st.sets}</span>` : ""}
-            ${st.side ? `<span class="chip side-tag">${st.side} side</span>` : ""}
-            ${st.note ? `<span class="chip">${esc(st.note)}</span>` : ""}
-          </div>
         </div>
-        ${mediaHTML(st.id)}
-        <div class="dial" id="dial"${timed ? ' data-act="toggle" role="button" tabindex="0" aria-label="Tap to start or pause the timer"' : ""}>
+        <p class="last">${prev ? `Last time: <b>${prev.sets.map(x => x.r + "x" + x.w).join(", ")}</b> ${esc(prev.u)}` : "First time: pick a weight that leaves about 2 reps in the tank."}</p>`;
+    } else {
+      counter = `<div class="dial" id="dial"${timed ? ' data-act="toggle" role="button" tabindex="0" aria-label="Tap to start or pause the timer"' : ""}>
           <span class="lead" data-lead hidden>Get set</span>
           <div class="big${timed ? "" : " reps"}" ${timed ? "data-count" : ""}>${timed ? fmt(st.amt) : st.amt}</div>
           <small>${timed ? "seconds" : "reps"}</small>
+        </div>`;
+    }
+    P.innerHTML = topBar(st) + `
+      <div class="p-body" data-swipe>
+        <div class="ex-head"><h2 class="p-name">${esc(e.name)}</h2>${meta ? `<p class="p-meta">${esc(meta)}</p>` : ""}</div>
+        ${figureHTML(st.id)}
+        ${counter}
+        <p class="cue"><b>Key cue</b>${esc(e.cues[0])}</p>
+        <div class="p-tools">
+          <button class="tool" data-act="form">Form tips</button>
+          ${VIDEO[st.id] ? '<button class="tool" data-act="video"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Video</button>' : ""}
         </div>
-        ${logBlock}
-        ${formHTML(e)}
-        ${upNext ? `<p class="note">After this: ${esc(upNext)}</p>` : ""}
-      </div>` + actions(timed ? "Start" : logged ? "Log set" : "Done, next", timed ? "toggle" : logged ? "log" : "done");
+      </div>` + actions(timed ? "Start" : logged ? "Log set" : "Done", timed ? "toggle" : logged ? "log" : "done");
     const sideTxt = st.side ? st.side + " side. " : "";
     speak(st.set > 1 || (st.side === "Right") ? (st.set > 1 ? "Set " + st.set + ". " : "") + sideTxt + (timed ? st.amt + " seconds." : "")
       : e.name + ". " + sideTxt + stepDose(st) + (st.sets > 1 ? ", " + st.sets + " sets." : "."));
@@ -1522,6 +1563,15 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     });
   }
 
+  function openSheet(label, html) {
+    closeSheet();
+    const wrap = document.createElement("div");
+    wrap.dataset.sheet = "1";
+    wrap.innerHTML = `<div class="sheet-backdrop" data-act="sheet-close"></div><div class="sheet" role="dialog" aria-label="${esc(label)}">
+      <div class="sheet-head"><span class="grab" aria-hidden="true"></span><button class="x" data-act="sheet-close" aria-label="Close">${icon.x}</button></div>${html}</div>`;
+    P.appendChild(wrap);
+  }
+  function closeSheet() { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); }
   function renderSheet() {
     const cur = steps[idx] ? steps[idx].item : routine.items.length;
     const rows = routine.items.map((it, i) => {
@@ -1529,10 +1579,20 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       const state = i === cur ? "cur" : idx > lastIdx ? "done" : "";
       return `<button class="jump ${state}" data-jump="${i}"><span class="st">${state === "done" ? icons2.tick : ""}</span><span>${esc(EX[it[0]].name)}</span><small>${doseText(it)}</small></button>`;
     }).join("");
-    const wrap = document.createElement("div");
-    wrap.innerHTML = `<div class="sheet-backdrop" data-act="sheet-close"></div><div class="sheet" role="dialog" aria-label="Exercises in this routine"><p class="eyebrow">Jump to</p>${rows}</div>`;
-    wrap.dataset.sheet = "1";
-    P.appendChild(wrap);
+    openSheet("Exercises and sound", `
+      <button class="sound-row" data-act="voice" aria-pressed="${prefs.sound}"><span>${prefs.sound ? icons2.voiceOn : icons2.voiceOff}</span><span>Voice cues and beeps</span><b>${prefs.sound ? "On" : "Off"}</b></button>
+      <p class="eyebrow">Jump to</p>${rows}`);
+  }
+  function formSheet(id) {
+    const e = EX[id];
+    openSheet("Form tips", `<h2 class="sheet-title">${esc(e.name)}</h2><div class="sheet-body">${formHTML(e)}</div>`);
+  }
+  function videoSheet(id) {
+    const v = VIDEO[id];
+    const body = navigator.onLine
+      ? `<div class="video-slot${v.short ? " short" : ""}"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?playsinline=1&rel=0" title="${esc(v.title)}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe><p class="vid-cred">${esc(v.title)} &middot; ${esc(v.channel)}</p></div>`
+      : '<p class="vid-off">Videos need a connection. The figure and form tips work offline.</p>';
+    openSheet("Video", `<h2 class="sheet-title">${esc(EX[id].name)}</h2>${body}`);
   }
 
   function renderFinish() {
@@ -1551,7 +1611,6 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
         <p>${esc(routine.name)} is logged for today. ${routine.id === "desk" ? "Do it again in an hour or so." : "Stand up and walk for a minute."}</p>
         <button class="btn btn-primary" data-act="close">Back to today</button>
       </div></div>`;
-    P.querySelector(".progress i").style.width = "100%";
     beep(660, 0.2); setTimeout(() => beep(990, 0.3), 220); speak("Workout complete. Nice work.");
     idx = steps.length + 1;
   }
@@ -1576,7 +1635,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
 
   P.addEventListener("click", e => {
     const j = e.target.closest("[data-jump]");
-    if (j) { clockStop(); idx = firstStepOf(+j.dataset.jump); return renderStep(); }
+    if (j) { clockStop(); closeSheet(); idx = firstStepOf(+j.dataset.jump); return renderStep(); }
     const b = e.target.closest("[data-act]"); if (!b) return;
     const act = b.dataset.act, st = steps[idx];
     switch (act) {
@@ -1586,12 +1645,14 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       case "voice":
         prefs.sound = !prefs.sound; saveJSON(PKEY, prefs);
         if (!prefs.sound) { try { speechSynthesis.cancel(); } catch (err) {} }
-        b.setAttribute("aria-pressed", String(prefs.sound)); b.setAttribute("aria-label", "Sound " + (prefs.sound ? "on" : "off")); if (prefs.sound) beep(660, 0.08);
-        b.innerHTML = prefs.sound ? icons2.voiceOn : icons2.voiceOff; return;
+        b.setAttribute("aria-pressed", String(prefs.sound)); b.querySelector("b").textContent = prefs.sound ? "On" : "Off";
+        b.querySelector("span").innerHTML = prefs.sound ? icons2.voiceOn : icons2.voiceOff; if (prefs.sound) beep(660, 0.08); return;
       case "list": return renderSheet();
-      case "sheet-close": { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); return; }
-      case "prev": clockStop(); idx = Math.max(0, idx - 1); if (steps[idx].kind === "rest" && idx > 0) idx--; return renderStep();
-      case "next": clockStop(); idx++; return renderStep();
+      case "form": return formSheet(st.id);
+      case "video": return videoSheet(st.id);
+      case "sheet-close": return closeSheet();
+      case "prev": return goPrev();
+      case "next": return goNext();
       case "done": session.done++; idx++; return renderStep();
       case "log": return logSet();
       case "minus15": return clockAdd(-15);
@@ -1610,10 +1671,40 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     }
   });
 
+  // Back skips rest screens. Next from an exercise skips straight to the next exercise step.
+  function goPrev() {
+    if (idx <= 0) return;
+    clockStop(); idx--;
+    while (idx > 0 && steps[idx].kind === "rest") idx--;
+    renderStep();
+  }
+  function goNext() {
+    if (idx >= steps.length) return;
+    clockStop();
+    const fromRest = steps[idx].kind === "rest";
+    idx++;
+    if (!fromRest) while (idx < steps.length && steps[idx].kind === "rest") idx++;
+    renderStep();
+  }
+  // Swipe left/right on the step to move between steps.
+  let touch = null;
+  P.addEventListener("touchstart", e => {
+    if (P.querySelector("[data-sheet]") || !e.target.closest("[data-swipe]") || e.target.closest("input")) { touch = null; return; }
+    touch = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+  }, { passive: true });
+  P.addEventListener("touchend", e => {
+    if (!touch) return;
+    const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - touch.t < 700) dx < 0 ? goNext() : goPrev();
+    touch = null;
+  }, { passive: true });
+
   document.addEventListener("visibilitychange", () => { if (!P.hidden && document.visibilityState === "visible") lockScreen(); });
   document.addEventListener("keydown", e => {
     if (P.hidden) return;
-    if (e.key === "Escape") { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); else closePlayer(); }
+    if (e.key === "Escape") { if (P.querySelector("[data-sheet]")) closeSheet(); else closePlayer(); }
+    if (e.key === "ArrowRight" && !P.querySelector("[data-sheet]") && e.target.tagName !== "INPUT") goNext();
+    if (e.key === "ArrowLeft" && !P.querySelector("[data-sheet]") && e.target.tagName !== "INPUT") goPrev();
   });
 
   // ---------- Nutrition (protein first) ----------
