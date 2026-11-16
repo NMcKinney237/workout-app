@@ -1,0 +1,1325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EEF2F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1618" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<title>Posture Reset</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Posture Reset">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html, body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+/* Layout: single-column phone app. Bottom tab bar, card list of routines, full-screen guided player sheet. */
+:root {
+  --bg: #EEF2F0;
+  --surface: #FFFFFF;
+  --surface-2: #E2E9E6;
+  --ink: #15242A;
+  --muted: #56676C;
+  --line: #CCD7D3;
+  --spruce: #2B6A5D;
+  --spruce-soft: #D3E6E0;
+  --ochre: #B9831F;
+  --ochre-soft: #F3E4C4;
+  --warn: #A9442F;
+  --on-accent: #FFFFFF;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 14px;
+  --tabbar-h: 64px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1618; --surface: #162125; --surface-2: #1E2C31; --ink: #E3ECE9; --muted: #93A6A6;
+    --line: #2A3B40; --spruce: #6EC1AC; --spruce-soft: #1C3A35; --ochre: #E6B75A; --ochre-soft: #3A2F18;
+    --warn: #E58A73; --on-accent: #0E1618; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1618; --surface: #162125; --surface-2: #1E2C31; --ink: #E3ECE9; --muted: #93A6A6;
+  --line: #2A3B40; --spruce: #6EC1AC; --spruce-soft: #1C3A35; --ochre: #E6B75A; --ochre-soft: #3A2F18;
+  --warn: #E58A73; --on-accent: #0E1618; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--spruce); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+
+.app {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom, 0px));
+}
+.view { display: flex; flex-direction: column; gap: 22px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.hdr h1 { font-size: 32px; font-weight: 800; letter-spacing: -.01em; }
+.hdr p { margin: 6px 0 0; color: var(--muted); max-width: 40ch; }
+
+/* week strip */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.day.today { border-color: var(--spruce); box-shadow: inset 0 0 0 1px var(--spruce); }
+.day b { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.day span { font-family: var(--f-mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+.dots { display: flex; gap: 3px; height: 6px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--spruce); }
+
+/* suggested */
+.suggest { background: var(--spruce); color: var(--on-accent); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.suggest .eyebrow { color: inherit; opacity: .8; }
+.suggest h2 { font-size: 26px; font-weight: 800; }
+.suggest p { margin: 0; opacity: .9; }
+.suggest .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 0; border-radius: 999px; padding: 12px 20px; font-weight: 700; font-size: 16px; min-height: 48px; }
+.btn-light { background: var(--surface); color: var(--ink); }
+.btn-primary { background: var(--spruce); color: var(--on-accent); }
+.btn-ghost { background: transparent; border: 1.5px solid var(--line); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--ink); }
+.suggest .chip { background: rgba(255,255,255,.18); color: inherit; }
+
+/* routine cards */
+.list { display: flex; flex-direction: column; gap: 10px; }
+.routine {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; width: 100%;
+}
+.routine h3 { font-size: 19px; font-weight: 700; }
+.routine p { grid-column: 1; margin: 0; color: var(--muted); font-size: 14px; }
+.routine .meta { grid-row: 1 / span 2; grid-column: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.routine .mins { font-family: var(--f-mono); font-size: 14px; color: var(--muted); }
+.go { width: 40px; height: 40px; border-radius: 50%; background: var(--spruce-soft); color: var(--spruce); display: grid; place-items: center; }
+.done-tag { font-size: 12px; font-weight: 700; color: var(--spruce); letter-spacing: .04em; text-transform: uppercase; }
+
+/* exercise library */
+.filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filter { flex: none; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; min-height: 40px; }
+.filter[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+details.ex { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+details.ex summary { list-style: none; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 14px 16px; cursor: pointer; }
+details.ex summary::-webkit-details-marker { display: none; }
+details.ex summary h3 { font-size: 18px; font-weight: 700; }
+details.ex summary small { grid-column: 1; color: var(--muted); font-size: 14px; }
+details.ex summary .plus { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-family: var(--f-mono); font-size: 20px; color: var(--muted); transition: transform .2s; }
+details.ex[open] summary .plus { transform: rotate(45deg); }
+.ex-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* form detail (shared with player) */
+.form-block { display: flex; flex-direction: column; gap: 6px; }
+.form-block h4 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.form-block ol, .form-block ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.cues li::marker { color: var(--spruce); }
+.mistakes li::marker { color: var(--warn); }
+.feel { background: var(--spruce-soft); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+.feel b { color: var(--spruce); }
+.easier { font-size: 14px; color: var(--muted); }
+.easier b { color: var(--ink); }
+
+/* plan */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card h2 { font-size: 20px; font-weight: 700; }
+.card p { margin: 0; }
+.sched { width: 100%; border-collapse: collapse; font-size: 15px; }
+.sched td { padding: 10px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.sched tr:first-child td { border-top: 0; }
+.sched td:first-child { width: 56px; font-family: var(--f-mono); font-size: 13px; color: var(--muted); padding-top: 12px; }
+.sched td small { display: block; color: var(--muted); }
+.cause { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cause > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.cause b { display: block; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.tight { color: var(--warn); }
+.weak { color: var(--spruce); }
+.card ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.note { font-size: 13px; color: var(--muted); }
+
+/* tab bar */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px));
+}
+.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); height: var(--tabbar-h); }
+.tab { background: none; border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-selected="true"] { color: var(--spruce); }
+
+/* player */
+.player {
+  position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.p-top {
+  display: flex; align-items: center; gap: 12px; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.p-top .x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; flex: none; }
+.p-top .t { flex: 1; min-width: 0; }
+.p-top .t div { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-top .t small { color: var(--muted); font-family: var(--f-mono); font-size: 12px; }
+.progress { height: 4px; background: var(--surface-2); margin-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); border-radius: 4px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--spruce); transition: width .3s; }
+.p-body {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; max-width: 560px; width: 100%; margin: 0 auto;
+  padding-block: 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.p-name { font-size: 30px; font-weight: 800; }
+.p-sub { display: flex; gap: 8px; flex-wrap: wrap; }
+.side-tag { background: var(--ochre-soft); color: var(--ochre); font-weight: 700; }
+.dial { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; }
+.dial .big { font-family: var(--f-mono); font-weight: 600; font-size: 64px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.dial .big.reps { font-family: var(--f-display); font-weight: 800; }
+.dial small { color: var(--muted); font-size: 14px; }
+.dial.running .big { color: var(--ochre); }
+.rest-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.rest-screen .big { font-family: var(--f-mono); font-size: 80px; font-weight: 600; color: var(--ochre); font-variant-numeric: tabular-nums; line-height: 1; }
+.rest-screen p { margin: 0; color: var(--muted); }
+.p-actions {
+  display: grid; grid-template-columns: 56px 1fr 56px; gap: 10px; padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-top: 1px solid var(--line); background: var(--surface); max-width: 100%;
+}
+.p-actions .nav { height: 56px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.p-actions .nav:disabled { opacity: .35; }
+.p-actions .main { height: 56px; border-radius: 999px; border: 0; background: var(--spruce); color: var(--on-accent); font-weight: 700; font-size: 17px; }
+.p-actions .main.pause { background: var(--ochre); color: var(--on-accent); }
+.finish { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; }
+.finish h2 { font-size: 34px; font-weight: 800; }
+.finish p { margin: 0; color: var(--muted); max-width: 32ch; }
+.check { width: 84px; height: 84px; border-radius: 50%; background: var(--spruce-soft); color: var(--spruce); display: grid; place-items: center; }
+
+/* player extras */
+.player { position: fixed; }
+.p-top .x[aria-pressed="false"] { color: var(--muted); }
+.dial .lead { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ochre); }
+.rest-screen { gap: 14px; }
+.rest-bar { width: min(320px, 100%); height: 8px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+.rest-bar i { display: block; height: 100%; background: var(--ochre); transition: width .25s linear; }
+.rest-adj { display: flex; gap: 10px; }
+.pill-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 10px 18px; min-height: 44px; font-family: var(--f-mono); font-weight: 600; }
+.upnext { width: 100%; margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.upnext h3 { font-size: 22px; font-weight: 800; }
+.last { margin: 0; font-size: 14px; color: var(--muted); }
+.last b { color: var(--ink); font-family: var(--f-mono); font-weight: 600; }
+.logset { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+.field label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.field .ctl { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 4px; align-items: center; }
+.field input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); text-align: center; font-family: var(--f-mono); font-size: 24px; font-weight: 600; padding: 4px 0; -moz-appearance: textfield; }
+.field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.field input:focus-visible { outline: 2px solid var(--spruce); border-radius: 6px; }
+.field .step { height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-size: 18px; font-weight: 700; }
+.unit-btn { border: 0; background: var(--spruce-soft); color: var(--spruce); font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; text-transform: none; letter-spacing: 0; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .4); z-index: 4; }
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; max-height: 72%; overflow-y: auto;
+  background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, .25);
+  padding-top: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column;
+}
+.jump { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 12px 2px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; font-weight: 600; }
+.jump small { font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 500; }
+.jump .st { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
+.jump.done { color: var(--muted); }
+.jump.done .st { background: var(--spruce); border-color: var(--spruce); color: var(--on-accent); }
+.jump.cur .st { border-color: var(--ochre); background: var(--ochre-soft); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; width: 100%; max-width: 380px; }
+.stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.stats b { font-family: var(--f-mono); font-size: 22px; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12px; color: var(--muted); }
+.toast { position: absolute; left: 50%; transform: translateX(-50%); top: calc(70px + env(safe-area-inset-top, 0px)); z-index: 6; background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+/* media: photos + diagrams */
+.media { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.media .frame { position: relative; aspect-ratio: 3 / 2; max-width: 100%; border-radius: 12px; overflow: hidden; background: var(--surface-2); }
+.media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.media img.f2 { animation: swap 2.6s steps(1) infinite; }
+@keyframes swap { 0% { opacity: 0; } 50% { opacity: 1; } }
+.media svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.media .tag { position: absolute; left: 8px; top: 8px; font-family: var(--f-mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--muted); }
+.media figcaption { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.media figcaption a { color: var(--spruce); font-weight: 600; text-decoration: none; }
+.media figcaption a:hover { text-decoration: underline; }
+.dg-body { stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.dg-far { stroke: var(--muted); stroke-width: 5; stroke-linecap: round; fill: none; opacity: .5; }
+.dg-head { fill: var(--surface-2); stroke: var(--ink); stroke-width: 4; }
+.dg-floor { stroke: var(--line); stroke-width: 2; }
+.dg-prop { stroke: var(--muted); stroke-width: 3; stroke-linecap: round; fill: none; }
+.dg-wall { fill: var(--line); opacity: .45; }
+.dg-mat { fill: var(--line); opacity: .45; }
+.dg-dash { stroke: var(--spruce); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.dg-accent { stroke: var(--ochre); stroke-width: 3; stroke-linecap: round; fill: none; }
+.dg-ball { fill: var(--ochre); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+  .media img.f2 { animation: none; opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <section class="view" id="view-today" aria-labelledby="h-today"></section>
+  <section class="view" id="view-library" aria-labelledby="h-lib" hidden></section>
+  <section class="view" id="view-plan" aria-labelledby="h-plan" hidden></section>
+</div>
+
+<div class="tabbar">
+  <nav role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-today" aria-selected="true" data-view="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today
+    </button>
+    <button class="tab" role="tab" id="tab-library" aria-selected="false" data-view="library">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 14l-3 6M12 14l3 6M6 10h12"/></svg>Exercises
+    </button>
+    <button class="tab" role="tab" id="tab-plan" aria-selected="false" data-view="plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Plan
+    </button>
+  </nav>
+</div>
+
+<div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="p-title"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Exercise library ----------
+  const EX = {
+    "chin-tuck": {
+      name: "Chin Tucks", tags: ["neck"], target: "Deep neck flexors",
+      steps: ["Sit or stand tall with eyes level.", "Glide your head straight back, like making a double chin. Don't look down.", "Hold 5 seconds, then relax forward slowly."],
+      cues: ["Ears slide back over your shoulders", "Back of the neck gets long", "Two fingers on chin can guide it back"],
+      mistakes: ["Nodding chin down toward chest", "Shrugging shoulders up", "Leaning the whole torso back"],
+      feel: "A gentle stretch at the base of the skull and light work in the front of the neck.",
+      easier: "Do it lying on your back, pressing the back of the head into the floor."
+    },
+    "head-lift": {
+      name: "Chin-Tuck Head Lift", tags: ["neck"], target: "Deep neck flexor endurance",
+      steps: ["Lie on your back, knees bent.", "Tuck your chin as above.", "Keep the tuck and lift your head about 1 inch off the floor. Hold 10 seconds.", "Lower with control."],
+      cues: ["Tuck first, then lift", "Imagine holding an egg under your chin", "Stop the hold when the chin starts to poke up"],
+      mistakes: ["Chin juts toward ceiling as you lift", "Ropey neck muscles (front sides) take over", "Holding your breath"],
+      feel: "Deep work in the front of the neck, not the sides.",
+      easier: "Shorter 5-second holds, or chin tucks without lifting."
+    },
+    "thoracic-chair": {
+      name: "Chair Thoracic Extension", tags: ["upper back"], target: "Mid-back mobility",
+      steps: ["Sit back in a chair with the backrest hitting just below the shoulder blades.", "Hands behind your head, elbows forward.", "Brace your abs lightly and arch your upper back over the backrest. Exhale.", "Return to tall sitting."],
+      cues: ["Bend from the mid-back, not the low back", "Keep ribs pulled down", "Elbows stay pointed forward"],
+      mistakes: ["Arching the low back to fake the range", "Cranking the neck back", "Pulling on the head with the hands"],
+      feel: "Movement between the shoulder blades.",
+      easier: "Smaller range, arms crossed over chest."
+    },
+    "wall-angel": {
+      name: "Wall Angels", tags: ["upper back", "neck"], target: "Scapular control, thoracic posture",
+      steps: ["Stand with back against a wall, heels about 6 inches out, knees soft.", "Flatten the low back gently toward the wall by tucking your pelvis.", "Head back toward the wall with a chin tuck.", "Arms in a goalpost shape; slide them up and down slowly."],
+      cues: ["Low back stays close to the wall the whole time", "Only go as high as you can keep contact", "Draw shoulder blades down as arms lower"],
+      mistakes: ["Arching off the wall when arms go up", "Chin poking forward", "Shrugging shoulders to ears"],
+      feel: "Work between and under the shoulder blades, stretch across the chest.",
+      easier: "Step feet further from the wall, or do it lying on the floor."
+    },
+    "doorway-pec": {
+      name: "Doorway Pec Stretch", tags: ["chest"], target: "Pec major and minor",
+      steps: ["Forearms on a door frame, elbows at shoulder height.", "Step one foot through and lean gently until you feel a stretch.", "Hold, breathing slowly."],
+      cues: ["Ribs down, glutes lightly squeezed", "Chin tucked", "Shoulders away from ears"],
+      mistakes: ["Arching the low back to lean further", "Shoulders rolling forward in the frame", "Pushing into tingling in the hands (back off if so)"],
+      feel: "Stretch across the front of the chest and shoulder.",
+      easier: "One arm at a time, or lower the elbows."
+    },
+    "hip-flexor": {
+      name: "Half-Kneeling Hip Flexor Stretch", tags: ["hips"], target: "Hip flexors (psoas, rectus femoris)",
+      steps: ["Kneel on one knee (pad under it), other foot forward.", "Tuck your tailbone under and squeeze the back-leg glute.", "Shift forward only an inch or two.", "Reach the back-side arm overhead for more stretch."],
+      cues: ["Tuck the pelvis first, then shift", "Ribs stacked over the pelvis", "Stretch should be at the front of the back hip"],
+      mistakes: ["Big forward lunge with an arched back", "Letting the glute relax", "Feeling it in the knee instead of the hip"],
+      feel: "Front of the back hip and upper thigh.",
+      easier: "Standing version: split stance at your desk, tuck and squeeze."
+    },
+    "couch-stretch": {
+      name: "Couch Stretch", tags: ["hips"], target: "Quads and hip flexors",
+      steps: ["Back knee on a pad near a wall or couch, shin up against it.", "Front foot planted, hands on the front knee or floor.", "Squeeze the back glute and tuck the pelvis.", "Slowly bring the torso upright as tolerated."],
+      cues: ["Glute on, pelvis tucked", "Upright torso is the progression", "Breathe slowly through the nose"],
+      mistakes: ["Arching the low back to sit up", "Forcing past a strong burn in the knee", "Holding your breath"],
+      feel: "Strong stretch along the front of the thigh and hip.",
+      easier: "Move the knee further from the wall or stay leaning forward."
+    },
+    "glute-bridge": {
+      name: "Glute Bridge", tags: ["glutes", "core"], target: "Glutes, posterior tilt control",
+      steps: ["Lie on your back, knees bent, feet hip-width, heels close.", "Flatten the low back by tucking the pelvis.", "Drive through the heels and lift hips until knees, hips and shoulders line up.", "Squeeze glutes 2 seconds at the top, lower slowly."],
+      cues: ["Tuck first, then lift", "Ribs stay down", "Push the floor away with heels"],
+      mistakes: ["Over-arching at the top", "Hamstrings cramping (bring feet closer)", "Pushing through the toes"],
+      feel: "Glutes doing the work, not the low back.",
+      easier: "Smaller range. Harder: single-leg, or a pause at the top."
+    },
+    "dead-bug": {
+      name: "Dead Bug", tags: ["core"], target: "Anterior core, rib position",
+      steps: ["Lie on your back, arms straight up, hips and knees at 90 degrees.", "Press the low back into the floor.", "Slowly extend one arm overhead and the opposite leg out. Exhale fully.", "Return and switch sides."],
+      cues: ["Low back stays glued to the floor", "Move slowly, 3 seconds out", "Exhale long as the limbs extend"],
+      mistakes: ["Low back lifting as the leg goes out", "Rushing", "Flaring the ribs"],
+      feel: "Deep abs working, low back calm.",
+      easier: "Move only the legs, or tap the heel to the floor with the knee bent."
+    },
+    "bird-dog": {
+      name: "Bird Dog", tags: ["core", "glutes"], target: "Spinal stability, glutes",
+      steps: ["Hands under shoulders, knees under hips.", "Brace lightly as if about to be poked in the stomach.", "Reach one arm forward and the opposite leg back. Hold 2 seconds.", "Return and switch."],
+      cues: ["Hips stay level", "Reach long, not high", "Imagine a cup of water on your low back"],
+      mistakes: ["Arching the back as the leg lifts", "Hips rotating open", "Head drooping or cranking up"],
+      feel: "Glute of the reaching leg and deep core.",
+      easier: "Move only the legs, or only the arms."
+    },
+    "rkc-plank": {
+      name: "Hard-Style Plank", tags: ["core", "glutes"], target: "Full-body tension, posterior tilt",
+      steps: ["Forearms on the floor, elbows under shoulders.", "Squeeze glutes hard and tuck the pelvis.", "Pull elbows toward toes without moving them.", "Hold maximum tension for short bouts."],
+      cues: ["Short and hard beats long and lazy", "Quads tight, glutes tight", "Breathe behind the brace"],
+      mistakes: ["Hips sagging", "Butt piked up", "Chin jutting forward"],
+      feel: "Abs and glutes shaking within 15 seconds.",
+      easier: "Knees down, keeping the glute squeeze and pelvic tuck."
+    },
+    "side-plank": {
+      name: "Side Plank", tags: ["core", "glutes"], target: "Obliques, glute med",
+      steps: ["Lie on your side, elbow under shoulder.", "Stack hips and feet, or bend knees for the easier version.", "Lift hips until the body forms a straight line.", "Hold, then switch."],
+      cues: ["Hips pushed slightly forward", "Top shoulder stacked over bottom", "Long neck"],
+      mistakes: ["Hips sagging or drifting back", "Shoulder shrugging toward ear"],
+      feel: "Side of the waist and the bottom-side hip.",
+      easier: "Knees bent on the floor."
+    },
+    "clamshell": {
+      name: "Clamshells", tags: ["glutes"], target: "Glute medius",
+      steps: ["Lie on your side, hips and knees bent, heels in line with your butt.", "Keep feet together and lift the top knee.", "Pause, lower slowly."],
+      cues: ["Hips stacked, don't roll back", "Small movement is fine", "Hand on top hip to check"],
+      mistakes: ["Rolling the pelvis back to lift higher", "Rushing reps"],
+      feel: "Side and back of the top hip.",
+      easier: "Smaller range. Harder: band above the knees."
+    },
+    "reverse-lunge": {
+      name: "Reverse Lunge", tags: ["glutes"], target: "Glutes, quads, hip extension",
+      steps: ["Stand tall, step one foot back.", "Lower until the back knee nearly touches the floor.", "Drive through the front heel to return."],
+      cues: ["Ribs down, slight forward lean is fine", "Front knee tracks over toes", "Squeeze the back glute at the bottom"],
+      mistakes: ["Arching the back at the bottom", "Front knee caving in", "Pushing off the back foot"],
+      feel: "Front-leg glute and quad, light stretch at the back hip.",
+      easier: "Hold a counter for balance or shorten the range."
+    },
+    "ytw": {
+      name: "Prone Y-T-W", tags: ["upper back"], target: "Lower and middle traps, rhomboids",
+      steps: ["Lie face down, forehead on a folded towel, chin tucked.", "Y: arms overhead in a Y, thumbs up, lift a few inches.", "T: arms out to the sides, lift.", "W: elbows bent, squeeze shoulder blades down and back. That's one rep."],
+      cues: ["Shoulder blades move down and back, not up", "Small lifts, slow", "Forehead stays down"],
+      mistakes: ["Lifting the chest by arching the low back", "Shrugging", "Lifting the head"],
+      feel: "Between and below the shoulder blades.",
+      easier: "Do only the W, or do it bent over at the hips standing."
+    },
+    "pull-apart": {
+      name: "Band Pull-Apart", tags: ["upper back"], target: "Rear delts, rhomboids",
+      steps: ["Hold a light band at chest height, arms straight, hands shoulder-width.", "Pull the band apart until it touches your chest.", "Return slowly."],
+      cues: ["Squeeze blades together at the end", "Ribs down, no lean back", "Chin tucked"],
+      mistakes: ["Shrugging", "Bending elbows a lot", "Arching the back"],
+      feel: "Back of the shoulders and between the blades.",
+      easier: "No band: prone T raises, or squeeze a towel pulled apart for 5-second holds."
+    },
+    "face-pull": {
+      name: "Band Face Pull", tags: ["upper back"], target: "Rear delts, external rotators",
+      steps: ["Anchor a band at eye height, hold with palms down.", "Pull toward your forehead, elbows high and wide.", "Finish by rotating hands back like a double-biceps pose.", "Return slowly."],
+      cues: ["Elbows at or above shoulder height", "Rotate out at the end", "Stand tall, glutes on"],
+      mistakes: ["Elbows dropping into a row", "Leaning back", "Neck poking forward"],
+      feel: "Back of the shoulders and upper back.",
+      easier: "No band: prone W raises."
+    },
+    "open-book": {
+      name: "Open Book", tags: ["upper back", "chest"], target: "Thoracic rotation, chest",
+      steps: ["Lie on your side, hips and knees bent to 90, arms straight out in front.", "Keep knees together and open the top arm across like a book.", "Eyes follow the hand. Exhale as you open.", "Close slowly."],
+      cues: ["Knees stay stacked", "Rotate through the ribs", "Let the arm relax toward the floor"],
+      mistakes: ["Knees separating", "Forcing the arm to the floor"],
+      feel: "Mid-back rotation and a stretch across the chest.",
+      easier: "Smaller range with a pillow under the head."
+    },
+    "cat-cow": {
+      name: "Cat-Cow", tags: ["core", "upper back"], target: "Spinal mobility, pelvic awareness",
+      steps: ["Hands under shoulders, knees under hips.", "Cat: tuck the tailbone, round the back, push the floor away. Exhale.", "Cow: let the chest drop forward, gaze slightly up. Inhale.", "Move slowly, one segment at a time."],
+      cues: ["Spend more time in the cat", "Start the movement from the pelvis", "Keep it slow"],
+      mistakes: ["Dumping into the low back on cow", "Rushing"],
+      feel: "Gentle movement through the whole spine.",
+      easier: "Seated version at your desk."
+    },
+    "breathing": {
+      name: "90/90 Breathing", tags: ["core"], target: "Rib position, pelvic reset",
+      steps: ["Lie on your back with feet on a wall, hips and knees at 90.", "Press heels lightly down into the wall until the hamstrings switch on. Low back flattens.", "Inhale through the nose 4 seconds, into the sides of the lower ribs.", "Exhale through the mouth 6 to 8 seconds until the ribs drop. Pause 2 seconds."],
+      cues: ["Full exhale is the point", "Ribs sink down toward the hips", "Tailbone slightly lifted off the floor"],
+      mistakes: ["Breathing into the upper chest", "Arching the back as you inhale"],
+      feel: "Abs and hamstrings lightly working, low back relaxed.",
+      easier: "Calves on a chair instead of feet on the wall."
+    },
+    "glute-squeeze": {
+      name: "Standing Pelvic Reset", tags: ["glutes", "core"], target: "Posterior tilt in standing",
+      steps: ["Stand tall, feet hip-width.", "Exhale, drop the ribs and gently tuck the tailbone under.", "Squeeze glutes to hold the tuck for 10 seconds.", "Relax and repeat."],
+      cues: ["Belt buckle tilts up toward your chin", "Ribs stacked over hips", "Knees soft, not locked"],
+      mistakes: ["Rounding the shoulders forward to tuck", "Locking the knees"],
+      feel: "Glutes and lower abs on, low back relaxed.",
+      easier: "Lean your back against a wall."
+    },
+    "childs-pose": {
+      name: "Wide Child's Pose", tags: ["upper back", "hips"], target: "Low back and lats",
+      steps: ["Knees wide, big toes together, sit back toward the heels.", "Walk the hands forward and let the chest sink.", "Breathe into the back of the ribs."],
+      cues: ["Let the low back round", "Long exhales", "Walk hands to one side to stretch the lats"],
+      mistakes: ["Forcing hips down if the knees complain"],
+      feel: "Stretch through the low back, lats and hips.",
+      easier: "Pillow under the hips or chest."
+    },
+    "suboccipital": {
+      name: "Suboccipital Release", tags: ["neck"], target: "Muscles at the base of the skull",
+      steps: ["Lie on your back with two tennis balls in a sock under the base of the skull.", "Let the head relax onto the balls.", "Make small yes nods and slow side-to-side turns."],
+      cues: ["Small movements", "Breathe and let the jaw relax"],
+      mistakes: ["Pressing hard on sore spots", "Placing it on the neck instead of the skull ridge"],
+      feel: "Pressure easing at the base of the head.",
+      easier: "Use your fingertips on the skull ridge while seated."
+    },
+    "hip-thrust": {
+      name: "Barbell Hip Thrust", tags: ["glutes", "gym"], target: "Glutes, hip extension under load",
+      steps: ["Upper back on a bench at the bottom of the shoulder blades, bar padded over the hip crease.", "Feet flat, shins vertical at the top.", "Tuck the chin and look forward, not at the ceiling.", "Drive through the heels until hips are level with knees. Pause 1 to 2 seconds, lower with control."],
+      cues: ["Ribs down and pelvis tucked at the top", "Chin stays tucked; torso and head move as one", "Stop when glutes are fully squeezed, not when the back arches"],
+      mistakes: ["Hyperextending the low back to lift higher", "Pushing through the toes", "Throwing the head back"],
+      feel: "Glutes burning, nothing in the low back.",
+      easier: "Glute bridge with a dumbbell on the hips, or feet on a Bosu dome."
+    },
+    "rdl": {
+      name: "Romanian Deadlift", tags: ["glutes", "gym"], target: "Hamstrings, glutes, hip hinge",
+      steps: ["Stand holding dumbbells or a barbell at the thighs, knees soft.", "Push the hips straight back, sliding the weight down the thighs.", "Stop when you feel a strong hamstring stretch, usually just below the knee.", "Squeeze the glutes to stand. Finish tall, not leaning back."],
+      cues: ["Hips back, not down", "Neutral spine: neither arched nor rounded", "Weight stays close to the legs"],
+      mistakes: ["Over-arching the low back at the top (common with forward tilt)", "Squatting the weight down", "Rounding to reach lower"],
+      feel: "Hamstrings stretching on the way down, glutes finishing the lift.",
+      easier: "Single kettlebell, or a band anchored under the feet."
+    },
+    "split-squat": {
+      name: "Bulgarian Split Squat", tags: ["glutes", "hips", "gym"], target: "Glutes, quads, back-hip flexor stretch",
+      steps: ["Back foot laces-down on a bench, front foot about two feet ahead.", "Hold dumbbells at your sides.", "Lower straight down until the back knee nearly touches the floor.", "Drive through the front heel to stand."],
+      cues: ["Tuck the pelvis and squeeze the back glute at the bottom", "Slight forward lean is fine; keep ribs down", "Front knee tracks over the toes"],
+      mistakes: ["Arching the back so the stretch disappears", "Front foot too close (heel lifts)", "Bouncing off the bottom"],
+      feel: "Front glute and quad working, stretch at the front of the back hip.",
+      easier: "Bodyweight, or a reverse lunge."
+    },
+    "chest-row": {
+      name: "Chest-Supported Row", tags: ["upper back", "gym"], target: "Mid back, rhomboids, lats",
+      steps: ["Lie chest-down on an incline bench set to about 30 to 45 degrees.", "Dumbbells hanging straight down, chin tucked.", "Row the elbows back toward the hips, squeezing the shoulder blades together.", "Lower slowly to a full stretch."],
+      cues: ["Chest stays on the pad", "Shoulder blades move first, then the arms", "Neck long, eyes down"],
+      mistakes: ["Shrugging toward the ears", "Lifting the chest off the bench", "Cranking the head up to look forward"],
+      feel: "Between and below the shoulder blades.",
+      easier: "Seated cable row or a band row with the same cues."
+    },
+    "cable-face-pull": {
+      name: "Cable Face Pull", tags: ["upper back", "gym"], target: "Rear delts, external rotators, lower traps",
+      steps: ["Rope on a cable set at forehead height.", "Pull toward your forehead with elbows high.", "Rotate out at the end so the knuckles point back.", "Return slowly."],
+      cues: ["Stand tall, glutes lightly squeezed", "Elbows at or above shoulder height", "Pause 1 second at the end"],
+      mistakes: ["Leaning back to move more weight", "Elbows dropping into a row", "Chin poking forward"],
+      feel: "Back of the shoulders and upper back.",
+      easier: "Band face pull."
+    },
+    "pallof": {
+      name: "Pallof Press", tags: ["core", "gym"], target: "Anti-rotation core",
+      steps: ["Stand side-on to a cable or band anchored at chest height.", "Hold the handle at your chest, feet hip-width, glutes on.", "Press straight out and hold 2 seconds without letting the torso twist.", "Bring it back in. Finish all reps, then switch sides."],
+      cues: ["Ribs down, pelvis tucked", "Arms move, body doesn't", "Exhale as you press"],
+      mistakes: ["Rotating toward the anchor", "Arching the back", "Standing too close (no tension)"],
+      feel: "Obliques and deep abs on the side nearest the anchor.",
+      easier: "Half-kneeling version, or lighter band. Harder: stand on a Bosu dome."
+    },
+    "bosu-dead-bug": {
+      name: "Bosu Dead Bug", tags: ["core", "bosu"], target: "Deep core with an unstable base",
+      steps: ["Sit on the edge of a Bosu dome and roll back so it sits under your low and mid back.", "Arms straight up, hips and knees at 90.", "Flatten the low back into the dome.", "Slowly extend opposite arm and leg, exhaling fully. Return and switch."],
+      cues: ["Low back stays pressed into the dome", "Slow is the point, 3 seconds out", "Ribs stay heavy"],
+      mistakes: ["Arching over the dome", "Rocking to keep balance instead of bracing"],
+      feel: "Deep abs working hard to keep you still.",
+      easier: "Regular dead bug on the floor."
+    },
+    "bosu-plank": {
+      name: "Bosu Plank", tags: ["core", "glutes", "bosu"], target: "Anti-extension core, posterior tilt",
+      steps: ["Forearms on the Bosu dome, elbows under shoulders.", "Legs straight, squeeze glutes and tuck the pelvis.", "Pull elbows toward toes without moving them. Hold."],
+      cues: ["Glutes and quads tight the whole time", "Hips level with shoulders", "Chin tucked, eyes on the dome"],
+      mistakes: ["Hips sagging (back arches)", "Shoulders shrugging up"],
+      feel: "Abs and glutes shaking.",
+      easier: "Hard-style plank on the floor, or knees down on the Bosu."
+    },
+    "bosu-bridge": {
+      name: "Bosu Single-Leg Bridge", tags: ["glutes", "bosu"], target: "Glutes, hamstrings, pelvic control",
+      steps: ["Lie on your back with one heel on the Bosu dome, other knee pulled to chest.", "Tuck the pelvis and drive the heel into the dome.", "Lift hips level, hold 2 seconds, lower slowly."],
+      cues: ["Hips stay level, no tilting", "Pulled-in knee keeps the low back flat", "Push through the heel"],
+      mistakes: ["Arching at the top", "Hips dropping to one side"],
+      feel: "Glute and hamstring of the working leg.",
+      easier: "Both feet on the dome."
+    },
+    "bosu-ytw": {
+      name: "Bosu Prone Y-T-W", tags: ["upper back", "bosu"], target: "Lower and middle traps",
+      steps: ["Lie face down with your hips and stomach over the Bosu dome, toes on the floor.", "Chin tucked, eyes on the floor.", "Raise arms in a Y, then T, then W. One of each is one rep.", "Use light dumbbells (1 to 3 kg) once bodyweight is easy."],
+      cues: ["Blades move down and back", "Torso stays still on the dome", "Thumbs up on Y and T"],
+      mistakes: ["Lifting the chest by arching", "Shrugging", "Going too heavy"],
+      feel: "Below and between the shoulder blades.",
+      easier: "Prone Y-T-W on the floor."
+    },
+    "levator": {
+      name: "Levator Scapulae Stretch", tags: ["neck"], target: "Back and side of the neck",
+      steps: ["Sit and hold the seat with your right hand.", "Turn your nose toward your left armpit.", "Use your left hand to gently pull the head down. Hold, then switch."],
+      cues: ["Anchor the shoulder down", "Gentle pull, no bouncing"],
+      mistakes: ["Yanking the head", "Shrugging the anchored shoulder"],
+      feel: "Stretch from the base of the skull to the top of the shoulder blade.",
+      easier: "Skip the hand pull, just let gravity work."
+    }
+  };
+
+  // ---------- Media ----------
+  // Photos: free-exercise-db (github.com/yuhonas/free-exercise-db), Unlicense / public domain. Two frames, start and end.
+  const PHOTO = {
+    "hip-flexor": ["kneeling_hip_flexor", ""],
+    "couch-stretch": ["all_fours_quad_stretch", "Similar quad stretch shown"],
+    "glute-bridge": ["pelvic_tilt_into_bridge", ""],
+    "dead-bug": ["dead_bug", ""],
+    "bosu-dead-bug": ["dead_bug", "Floor version shown"],
+    "rkc-plank": ["plank", ""],
+    "bosu-plank": ["plank", "Floor version shown"],
+    "side-plank": ["side_bridge", ""],
+    "reverse-lunge": ["dumbbell_rear_lunge", "Weighted version shown"],
+    "pull-apart": ["band_pull_apart", ""],
+    "face-pull": ["face_pull", "Cable version shown"],
+    "cable-face-pull": ["face_pull", ""],
+    "cat-cow": ["cat_stretch", ""],
+    "childs-pose": ["childs_pose", ""],
+    "levator": ["side_neck_stretch", "Similar neck stretch shown"],
+    "hip-thrust": ["barbell_hip_thrust", ""],
+    "rdl": ["romanian_deadlift", ""],
+    "split-squat": ["split_squat_with_dumbbells", ""],
+    "chest-row": ["dumbbell_incline_row", ""],
+    "pallof": ["pallof_press", ""],
+    "bosu-bridge": ["single_leg_glute_bridge", "Floor version shown"],
+    "ytw": ["lying_rear_delt_raise", "T position shown, on a bench"],
+    "bosu-ytw": ["lying_rear_delt_raise", "T position shown, on a bench"]
+  };
+
+  // Diagrams for exercises without a good open photo. viewBox 200x140, floor at y=127.
+  const SIDE = [["S", "H"], ["S", "P"], ["S", "E"], ["E", "W"], ["P", "K"], ["K", "A"], ["A", "T"]];
+  const FAR = [["S", "E2"], ["E2", "W2"], ["P", "K2"], ["K2", "A2"], ["A2", "T2"]];
+  const supine = { S: [62, 118], P: [112, 118], K: [134, 96], A: [152, 122], T: [162, 124], E: [84, 121], W: [104, 122] };
+  const DIAG = {
+    "chin-tuck": { props: ["floor", ["dash", 100, 6, 100, 127]], note: "Ear moves back over the shoulder",
+      poses: [{ H: [114, 28], S: [100, 48], E: [105, 67], W: [110, 85], P: [100, 90], K: [100, 108], A: [100, 125], T: [110, 125] }, { H: [102, 26] }] },
+    "head-lift": { props: ["floor"], note: "Tuck, then lift an inch",
+      poses: [Object.assign({ H: [46, 116] }, supine), { H: [49, 106] }] },
+    "thoracic-chair": { props: ["floor", ["line", 78, 96, 118, 96], ["line", 80, 96, 80, 127], ["line", 116, 96, 116, 127], ["line", 78, 96, 78, 64]], note: "Arch over the backrest",
+      poses: [{ P: [90, 92], S: [92, 54], H: [96, 38], E: [110, 40], W: [98, 32], K: [124, 92], A: [126, 125], T: [136, 125] }, { S: [80, 58], H: [75, 43], E: [96, 38], W: [83, 34] }] },
+    "wall-angel": { props: [["rect", 50, 0, 100, 127, "dg-wall"], "floor"], note: "Front view, back against the wall",
+      segs: [["N", "H"], ["N", "P"], ["SL", "SR"], ["SL", "EL"], ["EL", "WL"], ["SR", "ER"], ["ER", "WR"], ["PL", "PR"], ["PL", "KL"], ["KL", "AL"], ["PR", "KR"], ["KR", "AR"]],
+      poses: [{ H: [100, 26], N: [100, 40], SL: [84, 46], SR: [116, 46], P: [100, 90], PL: [92, 90], PR: [108, 90], KL: [91, 108], AL: [90, 125], KR: [109, 108], AR: [110, 125], EL: [66, 46], WL: [66, 24], ER: [134, 46], WR: [134, 24] },
+              { EL: [74, 24], WL: [88, 6], ER: [126, 24], WR: [112, 6] }] },
+    "doorway-pec": { props: ["floor", ["line", 110, 4, 110, 127]], note: "Elbow stays on the frame as you step through",
+      poses: [{ H: [97, 30], S: [96, 48], E: [110, 48], W: [110, 28], P: [96, 90], K: [96, 108], A: [96, 125], T: [106, 125], K2: [96, 108], A2: [96, 125], T2: [106, 125] },
+              { H: [127, 33], S: [122, 50], P: [108, 90], K: [102, 108], A: [94, 125], T: [104, 125], K2: [126, 106], A2: [130, 125], T2: [140, 125] }] },
+    "clamshell": { props: ["floor"], note: "Feet together, top knee opens",
+      poses: [{ H: [36, 106], S: [54, 112], E: [44, 122], W: [34, 115], P: [104, 112], K: [134, 108], A: [106, 116], T: [100, 114], K2: [134, 118], A2: [106, 122], T2: [100, 120] }, { K: [124, 85] }] },
+    "bird-dog": { props: ["floor"], note: "Opposite arm and leg reach long",
+      poses: [{ H: [126, 76], S: [112, 84], E: [112, 104], W: [112, 125], P: [66, 84], K: [66, 125], A: [40, 125], T: [34, 120], E2: [112, 104], W2: [112, 125], K2: [66, 125], A2: [40, 125], T2: [34, 120] },
+              { E: [132, 80], W: [152, 76], K2: [42, 84], A2: [16, 84], T2: [12, 78] }] },
+    "open-book": { props: [["rect", 18, 22, 160, 100, "dg-mat"]], note: "View from above, knees stay stacked",
+      poses: [{ H: [38, 72], S: [56, 72], P: [110, 72], K: [110, 102], A: [80, 102], T: [74, 102], E: [58, 91], W: [58, 110], E2: [54, 91], W2: [54, 110] }, { E: [56, 53], W: [56, 34] }] },
+    "breathing": { props: ["floor", ["line", 156, 40, 156, 127]], note: "Ribs expand on the inhale, drop on the exhale",
+      poses: [Object.assign({}, supine, { H: [44, 116], K: [112, 86], A: [148, 86], T: [154, 74], ell: [86, 113, 16, 3] }), { ell: [86, 110, 19, 7] }] },
+    "glute-squeeze": { props: ["floor"], note: "Belt line tilts from forward to level",
+      segs: [["S", "H"], ["S", "L"], ["L", "P"], ["S", "E"], ["E", "W"], ["P", "K"], ["K", "A"], ["A", "T"]], accent: [["B1", "B2"]],
+      poses: [{ H: [104, 28], S: [100, 46], L: [93, 70], P: [100, 90], K: [102, 108], A: [100, 125], T: [110, 125], E: [100, 66], W: [102, 86], B1: [89, 82], B2: [113, 91] },
+              { L: [98, 70], K: [101, 108], B1: [89, 89], B2: [113, 84] }] },
+    "suboccipital": { props: ["floor", ["ball", 44, 123, 3.5], ["ball", 49, 123, 3.5]], note: "Small nods on the balls",
+      poses: [Object.assign({ H: [44, 111] }, supine), { H: [47, 110] }] }
+  };
+
+  function lerpPose(d, t) {
+    const a = d.poses[0], b = Object.assign({}, a, d.poses[1] || {}), out = {};
+    for (const k in b) out[k] = b[k].map((v, i) => (a[k] ? a[k][i] : v) + (v - (a[k] ? a[k][i] : v)) * t);
+    return out;
+  }
+  function drawDiag(svg, d, t) {
+    const P = lerpPose(d, t);
+    let h = "";
+    (d.props || []).forEach(p => {
+      if (p === "floor") h += '<line class="dg-floor" x1="0" y1="127" x2="200" y2="127"/>';
+      else if (p[0] === "line") h += `<line class="dg-prop" x1="${p[1]}" y1="${p[2]}" x2="${p[3]}" y2="${p[4]}"/>`;
+      else if (p[0] === "dash") h += `<line class="dg-dash" x1="${p[1]}" y1="${p[2]}" x2="${p[3]}" y2="${p[4]}"/>`;
+      else if (p[0] === "rect") h += `<rect class="${p[5]}" x="${p[1]}" y="${p[2]}" width="${p[3]}" height="${p[4]}" rx="4"/>`;
+      else if (p[0] === "ball") h += `<circle class="dg-ball" cx="${p[1]}" cy="${p[2]}" r="${p[3]}"/>`;
+    });
+    const seg = (pair, cls) => (P[pair[0]] && P[pair[1]]) ? `<line class="${cls}" x1="${P[pair[0]][0].toFixed(1)}" y1="${P[pair[0]][1].toFixed(1)}" x2="${P[pair[1]][0].toFixed(1)}" y2="${P[pair[1]][1].toFixed(1)}"/>` : "";
+    FAR.forEach(s => h += seg(s, "dg-far"));
+    (d.segs || SIDE).forEach(s => h += seg(s, "dg-body"));
+    (d.accent || []).forEach(s => h += seg(s, "dg-accent"));
+    if (P.ell) h += `<ellipse class="dg-accent" cx="${P.ell[0].toFixed(1)}" cy="${P.ell[1].toFixed(1)}" rx="${P.ell[2].toFixed(1)}" ry="${P.ell[3].toFixed(1)}"/>`;
+    if (P.H) h += `<circle class="dg-head" cx="${P.H[0].toFixed(1)}" cy="${P.H[1].toFixed(1)}" r="8"/>`;
+    svg.innerHTML = h;
+  }
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+  function diagLoop(now) {
+    let t;
+    if (reduceMotion) t = Math.floor(now / 2200) % 2;
+    else {
+      const ph = (now % 4200) / 4200;
+      t = ph < .15 ? 0 : ph < .5 ? ease((ph - .15) / .35) : ph < .65 ? 1 : 1 - ease((ph - .65) / .35);
+    }
+    document.querySelectorAll("svg[data-diag]").forEach(svg => {
+      if (svg.getClientRects().length) drawDiag(svg, DIAG[svg.dataset.diag], t);
+    });
+    requestAnimationFrame(diagLoop);
+  }
+  requestAnimationFrame(diagLoop);
+
+  function videoURL(name) { return "https://www.youtube.com/results?search_query=" + encodeURIComponent(name + " exercise form"); }
+  function mediaHTML(id) {
+    const e = EX[id];
+    const link = `<a href="${videoURL(e.name)}" target="_blank" rel="noopener">Watch form videos</a>`;
+    if (PHOTO[id]) {
+      const [f, cap] = PHOTO[id];
+      return `<figure class="media"><div class="frame">
+          <img src="img/${f}_0.jpg" alt="${esc(e.name)}, start position" loading="lazy">
+          <img class="f2" src="img/${f}_1.jpg" alt="${esc(e.name)}, end position" loading="lazy">
+        </div><figcaption><span>${esc(cap || "Start and end position")}</span>${link}</figcaption></figure>`;
+    }
+    if (DIAG[id]) {
+      return `<figure class="media"><div class="frame">
+          <svg viewBox="0 0 200 140" data-diag="${id}" role="img" aria-label="Animated diagram: ${esc(e.name)}"></svg>
+        </div><figcaption><span>${esc(DIAG[id].note)}</span>${link}</figcaption></figure>`;
+    }
+    return `<figure class="media"><figcaption><span></span>${link}</figcaption></figure>`;
+  }
+
+  // ---------- Routines ----------
+  // item: [exerciseId, sets, amount, unit ('reps'|'sec'), perSide, restSec, note]
+  const ROUTINES = [
+    {
+      id: "desk", name: "Desk Reset", mins: 5, when: "Every 60 to 90 minutes of sitting",
+      blurb: "A quick undo for the seated posture. Most of it works at your desk.",
+      items: [
+        ["chin-tuck", 1, 10, "reps", false, 0, "5-second hold each"],
+        ["thoracic-chair", 1, 8, "reps", false, 0, ""],
+        ["glute-squeeze", 1, 5, "reps", false, 0, "10-second hold each"],
+        ["hip-flexor", 1, 30, "sec", true, 0, "Standing split-stance version is fine"],
+        ["doorway-pec", 1, 30, "sec", false, 0, ""]
+      ]
+    },
+    {
+      id: "morning", name: "Morning Mobility", mins: 10, when: "Daily, before you sit down",
+      blurb: "Reset breathing and rib position, open the hips, wake up the upper back.",
+      items: [
+        ["breathing", 1, 5, "reps", false, 0, "5 slow breaths"],
+        ["cat-cow", 1, 10, "reps", false, 0, ""],
+        ["hip-flexor", 1, 45, "sec", true, 0, ""],
+        ["bird-dog", 1, 6, "reps", true, 0, ""],
+        ["wall-angel", 1, 10, "reps", false, 0, ""],
+        ["chin-tuck", 1, 10, "reps", false, 0, "5-second hold each"]
+      ]
+    },
+    {
+      id: "gym-a", name: "Gym A: Hips and Core", mins: 40, when: "2x per week",
+      blurb: "Loaded glute and hamstring work plus Bosu core. The main fix for forward pelvic tilt.",
+      items: [
+        ["breathing", 1, 5, "reps", false, 0, "Warm-up"],
+        ["bosu-bridge", 1, 10, "reps", true, 0, "Warm-up, bodyweight"],
+        ["hip-thrust", 4, 10, "reps", false, 90, "Leave 2 reps in the tank"],
+        ["split-squat", 3, 8, "reps", true, 75, ""],
+        ["rdl", 3, 10, "reps", false, 90, ""],
+        ["bosu-dead-bug", 3, 6, "reps", true, 45, ""],
+        ["pallof", 2, 10, "reps", true, 30, ""],
+        ["bosu-plank", 3, 20, "sec", false, 30, ""],
+        ["couch-stretch", 1, 60, "sec", true, 0, "Cool-down"]
+      ]
+    },
+    {
+      id: "gym-b", name: "Gym B: Upper Back and Neck", mins: 35, when: "2x per week",
+      blurb: "Rows and pulls to bring the shoulders back, plus deep neck work for head position.",
+      items: [
+        ["cat-cow", 1, 8, "reps", false, 0, "Warm-up"],
+        ["pull-apart", 1, 20, "reps", false, 0, "Warm-up, light band"],
+        ["chest-row", 4, 10, "reps", false, 90, ""],
+        ["cable-face-pull", 3, 15, "reps", false, 60, ""],
+        ["bosu-ytw", 2, 6, "reps", false, 45, "One rep = Y + T + W"],
+        ["head-lift", 3, 5, "reps", false, 30, "10-second hold each"],
+        ["wall-angel", 2, 10, "reps", false, 30, ""],
+        ["doorway-pec", 2, 30, "sec", false, 15, ""]
+      ]
+    },
+    {
+      id: "strength-a", name: "Home A: Hips and Core", mins: 25, when: "No-gym swap for Gym A",
+      blurb: "Strengthen glutes and abs, the muscles that pull the pelvis out of its forward tilt.",
+      items: [
+        ["breathing", 1, 5, "reps", false, 0, "Warm-up"],
+        ["glute-bridge", 3, 12, "reps", false, 45, ""],
+        ["dead-bug", 3, 6, "reps", true, 45, ""],
+        ["reverse-lunge", 3, 8, "reps", true, 60, ""],
+        ["clamshell", 2, 15, "reps", true, 30, ""],
+        ["rkc-plank", 3, 15, "sec", false, 30, "Max tension"],
+        ["side-plank", 2, 20, "sec", true, 30, ""],
+        ["couch-stretch", 1, 60, "sec", true, 0, "Cool-down"]
+      ]
+    },
+    {
+      id: "strength-b", name: "Home B: Upper Back and Neck", mins: 20, when: "No-gym swap for Gym B (band only)",
+      blurb: "Build the upper back and deep neck muscles that hold your head over your shoulders.",
+      items: [
+        ["cat-cow", 1, 8, "reps", false, 0, "Warm-up"],
+        ["ytw", 2, 6, "reps", false, 45, "One rep = Y + T + W"],
+        ["pull-apart", 3, 15, "reps", false, 45, ""],
+        ["face-pull", 3, 12, "reps", false, 45, ""],
+        ["head-lift", 3, 5, "reps", false, 30, "10-second hold each"],
+        ["wall-angel", 2, 10, "reps", false, 30, ""],
+        ["open-book", 1, 8, "reps", true, 0, ""],
+        ["doorway-pec", 2, 30, "sec", false, 15, ""]
+      ]
+    },
+    {
+      id: "evening", name: "Evening Unwind", mins: 10, when: "Before bed or after work",
+      blurb: "Long, easy stretches for tight hips, chest and neck. Low effort.",
+      items: [
+        ["couch-stretch", 1, 60, "sec", true, 0, ""],
+        ["childs-pose", 1, 60, "sec", false, 0, ""],
+        ["open-book", 1, 8, "reps", true, 0, ""],
+        ["levator", 1, 30, "sec", true, 0, ""],
+        ["suboccipital", 1, 60, "sec", false, 0, ""],
+        ["breathing", 1, 5, "reps", false, 0, "5 slow breaths"]
+      ]
+    }
+  ];
+  const R = Object.fromEntries(ROUTINES.map(r => [r.id, r]));
+
+  // Mon..Sun (getDay: 0=Sun)
+  const WEEK = {
+    1: { main: "gym-a", label: "Gym A", extra: "Desk Reset 3 to 5 times. No gym? Home A" },
+    2: { main: "gym-b", label: "Gym B", extra: "Desk Reset 3 to 5 times. No gym? Home B" },
+    3: { main: "evening", label: "Evening Unwind + 30 min walk", extra: "Desk Reset 3 to 5 times" },
+    4: { main: "gym-a", label: "Gym A", extra: "Desk Reset 3 to 5 times. No gym? Home A" },
+    5: { main: "gym-b", label: "Gym B", extra: "Desk Reset 3 to 5 times. No gym? Home B" },
+    6: { main: "morning", label: "Morning Mobility + long walk", extra: "Anything active you enjoy" },
+    0: { main: "evening", label: "Rest, Evening Unwind optional", extra: "Light movement only" }
+  };
+
+  // ---------- Storage (per-device log) ----------
+  const KEY = "posture-reset-log-v1";
+  function loadLog() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function saveLog(log) { try { localStorage.setItem(KEY, JSON.stringify(log)); } catch (e) {} }
+  let log = loadLog();
+  function dkey(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const icon = {
+    play: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
+    x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    prev: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+    next: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+    check: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+  };
+
+  function doseText(it) {
+    const [, sets, amt, unit, side] = it;
+    const a = unit === "sec" ? amt + "s" : amt;
+    return (sets > 1 ? sets + " x " : "") + a + (unit === "reps" ? " reps" : "") + (side ? " / side" : "");
+  }
+
+  function formHTML(e) {
+    return `
+      <div class="feel"><b>Feel it:</b> ${esc(e.feel)}</div>
+      <div class="form-block"><h4>How to</h4><ol>${e.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>
+      <div class="form-block"><h4>Form cues</h4><ul class="cues">${e.cues.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>
+      <div class="form-block"><h4>Common mistakes</h4><ul class="mistakes">${e.mistakes.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>
+      <div class="easier"><b>Easier option:</b> ${esc(e.easier)}</div>`;
+  }
+
+  // ---------- Today ----------
+  function renderToday() {
+    const now = new Date();
+    const dow = now.getDay();
+    const plan = WEEK[dow];
+    const todayLog = log[dkey(now)] || [];
+    const mon = new Date(now); mon.setDate(now.getDate() - ((dow + 6) % 7));
+    const names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    let strip = "";
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      const n = (log[dkey(d)] || []).length;
+      const isToday = dkey(d) === dkey(now);
+      strip += `<div class="day${isToday ? " today" : ""}" aria-label="${names[i]} ${d.getDate()}, ${n} sessions"><b>${names[i]}</b><span>${d.getDate()}</span><div class="dots">${"<i></i>".repeat(Math.min(n, 4))}</div></div>`;
+    }
+    const main = R[plan.main];
+    const doneMain = todayLog.includes(main.id);
+    const deskCount = todayLog.filter(x => x === "desk").length;
+
+    document.getElementById("view-today").innerHTML = `
+      <header class="hdr">
+        <p class="eyebrow">${now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+        <h1 id="h-today">Posture Reset</h1>
+        <p>For long days at a desk. Targets forward pelvic tilt and forward head posture.</p>
+      </header>
+      <div class="week" aria-label="This week">${strip}</div>
+      <div class="suggest">
+        <p class="eyebrow">Today's plan</p>
+        <h2>${esc(plan.label)}</h2>
+        <p>${esc(plan.extra)}${deskCount ? ` &middot; ${deskCount} done today` : ""}</p>
+        <div class="row">
+          <button class="btn btn-light" data-start="${main.id}">${doneMain ? "Do it again" : "Start " + esc(main.name.split(":")[0])}</button>
+          <button class="btn btn-light" data-start="desk" style="background:transparent;color:inherit;border:1.5px solid currentColor">Desk Reset</button>
+        </div>
+      </div>
+      <div class="list" role="list">
+        <p class="eyebrow">All routines</p>
+        ${ROUTINES.map(r => {
+          const n = todayLog.filter(x => x === r.id).length;
+          return `<button class="routine" role="listitem" data-start="${r.id}">
+            <h3>${esc(r.name)}</h3>
+            <p>${esc(r.when)}</p>
+            <div class="meta"><span class="mins">${r.mins} min</span>${n ? `<span class="done-tag">Done${n > 1 ? " x" + n : ""}</span>` : `<span class="go">${icon.play}</span>`}</div>
+          </button>`;
+        }).join("")}
+      </div>`;
+  }
+
+  // ---------- Library ----------
+  const FILTERS = ["all", "gym", "bosu", "neck", "upper back", "chest", "hips", "glutes", "core"];
+  let filter = "all";
+  function renderLibrary() {
+    const list = Object.entries(EX).filter(([, e]) => filter === "all" || e.tags.includes(filter));
+    document.getElementById("view-library").innerHTML = `
+      <header class="hdr">
+        <p class="eyebrow">${Object.keys(EX).length} exercises</p>
+        <h1 id="h-lib">Exercises and form</h1>
+        <p>Tap any exercise for steps, cues and the mistakes to avoid.</p>
+      </header>
+      <div class="filters" role="group" aria-label="Filter by area">
+        ${FILTERS.map(f => `<button class="filter" data-filter="${f}" aria-pressed="${f === filter}">${f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}</button>`).join("")}
+      </div>
+      <div class="list">
+        ${list.map(([id, e]) => `<details class="ex" id="ex-${id}">
+          <summary><h3>${esc(e.name)}</h3><small>${esc(e.target)}</small><span class="plus" aria-hidden="true">+</span></summary>
+          <div class="ex-body">${mediaHTML(id)}${formHTML(e)}</div>
+        </details>`).join("")}
+      </div>`;
+  }
+
+  // ---------- Plan ----------
+  function renderPlan() {
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    const dn = { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat", 0: "Sun" };
+    document.getElementById("view-plan").innerHTML = `
+      <header class="hdr">
+        <p class="eyebrow">The why and the week</p>
+        <h1 id="h-plan">Your plan</h1>
+      </header>
+      <div class="card">
+        <h2>What's going on</h2>
+        <p>Sitting all day shortens the muscles at the front of the hips and chest and switches off the ones at the back. The pelvis tips forward and the head drifts ahead of the shoulders.</p>
+        <div class="cause">
+          <div><b class="tight">Tight</b>Hip flexors, quads, low back, chest, upper traps, back of the neck</div>
+          <div><b class="weak">Weak</b>Glutes, deep abs, mid and lower traps, deep neck flexors</div>
+        </div>
+        <p>The fix is to stretch the tight side and strengthen the weak side, then break up sitting often enough that it doesn't undo the work.</p>
+      </div>
+      <div class="card">
+        <h2>Weekly schedule</h2>
+        <table class="sched"><tbody>
+          ${order.map(d => `<tr><td>${dn[d]}</td><td>${esc(WEEK[d].label)}<small>${esc(WEEK[d].extra)}</small></td></tr>`).join("")}
+        </tbody></table>
+        <p class="note">Do Morning Mobility any day you can. If you only have time for one thing, make it the Desk Reset, often.</p>
+      </div>
+      <div class="card">
+        <h2>Desk setup</h2>
+        <ul>
+          <li>Top of the monitor at eye level, about an arm's length away.</li>
+          <li>Feet flat, hips slightly higher than knees.</li>
+          <li>Sit back in the chair with support at the low back. Elbows near 90 degrees.</li>
+          <li>Hold your phone up at eye level instead of looking down.</li>
+          <li>Stand or walk for 2 minutes every 30 to 60 minutes. A timer helps.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Using the Bosu</h2>
+        <ul>
+          <li>Best for core and glute work lying down: dead bugs, planks, bridges, prone raises. That's where it's built into Gym A and B.</li>
+          <li>Keep heavy lifts (hip thrusts, RDLs, split squats, rows) on stable ground. Load matters more than wobble for fixing pelvic tilt, and the Bosu caps how much you can safely move.</li>
+          <li>If you like standing Bosu work for balance, keep it light (Pallof press, single-arm presses) and do it after the main lifts.</li>
+          <li>Watch the low back on the Bosu. People with forward tilt tend to arch to stay balanced; brace and tuck first.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Progressing</h2>
+        <ul>
+          <li>Weeks 1 to 2: learn the form with lighter weights. Stop sets early if form slips.</li>
+          <li>Weeks 3 to 8: add weight to the main lifts once you hit the top of the rep range on every set with clean form. Add 5 to 10 seconds to holds.</li>
+          <li>Pick weights that leave about 2 reps in reserve. Forward-tilt patterns show up when you grind.</li>
+        </ul>
+        <p class="note">Gear: barbell, dumbbells, cable or bands, bench, Bosu, a mat and two tennis balls.</p>
+      </div>
+      <div class="card">
+        <h2>During a workout</h2>
+        <ul>
+          <li>Voice cues read out each exercise, "next up" during rest, and the halfway point on long holds. Tap the speaker to mute.</li>
+          <li>Timed holds give you a 3-second countdown to get into position, with beeps on the last 3 seconds.</li>
+          <li>Gym lifts have reps and weight fields, pre-filled from your last session. "Log set" saves it and starts the rest timer.</li>
+          <li>Use the list button to jump to any exercise. Rest can be shortened or extended by 15 seconds.</li>
+        </ul>
+      </div>
+      <p class="note">Photos from free-exercise-db (public domain). Diagrams drawn for this app. "Watch form videos" opens a YouTube search.</p>
+      <p class="note">General fitness guidance, not medical advice. Stop any exercise that causes sharp pain, numbness or tingling, and see a physical therapist if pain persists.</p>`;
+  }
+
+  // ---------- Tabs ----------
+  const views = ["today", "library", "plan"];
+  function showView(v) {
+    views.forEach(n => {
+      document.getElementById("view-" + n).hidden = n !== v;
+      document.getElementById("tab-" + n).setAttribute("aria-selected", String(n === v));
+    });
+    if (v === "today") renderToday();
+    window.scrollTo(0, 0);
+    try { sessionStorage.setItem("pr-view", v); } catch (e) {}
+  }
+  document.querySelector(".tabbar").addEventListener("click", e => {
+    const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view);
+  });
+  document.getElementById("view-library").addEventListener("click", e => {
+    const b = e.target.closest("[data-filter]"); if (b) { filter = b.dataset.filter; renderLibrary(); }
+  });
+  document.querySelector(".app").addEventListener("click", e => {
+    const b = e.target.closest("[data-start]"); if (b) openPlayer(b.dataset.start);
+  });
+
+  // ---------- Player ----------
+  // Flow modeled on Feeel (voice + countdown cues, next-up during rest) and wger/Liftosaur (set logging, rest +/-15s, jump list, summary).
+  const P = document.getElementById("player");
+  const LKEY = "posture-reset-lifts-v1", PKEY = "posture-reset-prefs-v1";
+  function loadJSON(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
+  function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  let lifts = loadJSON(LKEY, {});
+  const prefs = Object.assign({ voice: true, unit: "lb" }, loadJSON(PKEY, {}));
+  let steps = [], idx = 0, routine = null, wakeLock = null, audio = null, clock = null, session = null, hold = "idle", closeArmed = 0;
+
+  const isLogged = st => st.kind === "ex" && st.unit === "reps" && EX[st.id].tags.includes("gym");
+  const icons2 = {
+    list: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>',
+    voiceOn: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
+    voiceOff: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
+    tick: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+  };
+
+  function buildSteps(r) {
+    const out = [];
+    r.items.forEach((it, i) => {
+      const [id, sets, amt, unit, side, rest, note] = it;
+      for (let s = 1; s <= sets; s++) {
+        (side ? ["Left", "Right"] : [null]).forEach(sd => out.push({ kind: "ex", id, set: s, sets, amt, unit, side: sd, note, item: i }));
+        if (rest && s < sets) out.push({ kind: "rest", secs: rest, item: i });
+      }
+    });
+    return out;
+  }
+
+  // ---- feedback: beeps, vibration, voice ----
+  function beep(freq, dur) {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = freq; o.connect(g); g.connect(audio.destination);
+      g.gain.setValueAtTime(0.0001, audio.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + dur);
+      o.start(); o.stop(audio.currentTime + dur + 0.05);
+    } catch (e) {}
+  }
+  function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+  function speak(text) {
+    if (!prefs.voice) return;
+    try { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.03; s.speak(u); } catch (e) {}
+  }
+  async function lockScreen() { try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) { wakeLock = null; } }
+  function unlockScreen() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+  // ---- countdown clock with pause / adjust ----
+  function clockStart(secs, onTick, onDone) {
+    clockStop();
+    clock = { end: Date.now() + secs * 1000, total: secs, left: secs, last: -1, paused: false, onTick, onDone };
+    clock.iv = setInterval(clockTick, 100); clockTick();
+  }
+  function clockTick() {
+    if (!clock || clock.paused) return;
+    const ms = clock.end - Date.now(), left = Math.max(0, Math.ceil(ms / 1000));
+    if (left !== clock.last) { clock.last = left; clock.left = left; clock.onTick(left, clock.total); }
+    if (ms <= 0) { const done = clock.onDone; clockStop(); done(); }
+  }
+  function clockStop() { if (clock) clearInterval(clock.iv); clock = null; }
+  function clockPause() { if (clock && !clock.paused) { clock.left = Math.max(0, (clock.end - Date.now()) / 1000); clock.paused = true; } }
+  function clockResume() { if (clock && clock.paused) { clock.paused = false; clock.end = Date.now() + clock.left * 1000; clock.last = -1; } }
+  function clockAdd(s) {
+    if (!clock) return;
+    clock.end = Math.max(Date.now() + 1000, clock.end + s * 1000);
+    clock.total = Math.max(1, clock.total + s); clock.last = -1; clockTick();
+  }
+  const fmt = s => s >= 60 ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") : String(s);
+
+  // ---- open / close ----
+  function openPlayer(id) {
+    routine = R[id]; steps = buildSteps(routine); idx = 0; hold = "idle"; clockStop();
+    session = { start: Date.now(), sets: 0, done: 0, volume: 0, lifts: {} };
+    P.hidden = false; document.body.style.overflow = "hidden";
+    lockScreen(); beep(520, 0.05); renderStep();
+  }
+  function closePlayer() {
+    clockStop(); unlockScreen(); try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    P.hidden = true; document.body.style.overflow = ""; renderToday();
+  }
+
+  // ---- helpers ----
+  function stepDose(st) {
+    return st.unit === "sec" ? st.amt + " seconds" : st.amt + " reps";
+  }
+  function firstStepOf(i) { return steps.findIndex(s => s.item === i); }
+  function lastEntry(id) {
+    const list = (lifts[id] || []).filter(x => x.s !== session.start);
+    return list[list.length - 1] || null;
+  }
+  function topBar(st) {
+    const n = routine.items.length;
+    return `
+      <div class="p-top">
+        <button class="x" data-act="close" aria-label="End workout">${icon.x}</button>
+        <div class="t"><div id="p-title">${esc(routine.name)}</div><small>${st ? `Exercise ${st.item + 1} of ${n}` : ""}</small></div>
+        <button class="x" data-act="voice" aria-pressed="${prefs.voice}" aria-label="Voice cues ${prefs.voice ? "on" : "off"}">${prefs.voice ? icons2.voiceOn : icons2.voiceOff}</button>
+        <button class="x" data-act="list" aria-label="All exercises in this routine">${icons2.list}</button>
+      </div>
+      <div class="progress" aria-hidden="true"><i style="width:${Math.round((idx / steps.length) * 100)}%"></i></div>`;
+  }
+  function actions(mainLabel, mainAct, mainCls) {
+    return `<div class="p-actions">
+        <button class="nav" data-act="prev" aria-label="Previous" ${idx === 0 ? "disabled" : ""}>${icon.prev}</button>
+        <button class="main ${mainCls || ""}" data-act="${mainAct}" id="main-btn">${mainLabel}</button>
+        <button class="nav" data-act="next" aria-label="Skip">${icon.next}</button>
+      </div>`;
+  }
+
+  // ---- render ----
+  function renderStep() {
+    hold = "idle";
+    if (idx >= steps.length) return renderFinish();
+    return steps[idx].kind === "rest" ? renderRest(steps[idx]) : renderEx(steps[idx]);
+  }
+
+  function renderRest(st) {
+    const nx = steps[idx + 1];
+    const e = nx ? EX[nx.id] : null;
+    P.innerHTML = topBar(st) + `
+      <div class="p-body"><div class="rest-screen">
+        <p class="eyebrow">Rest</p>
+        <div class="big" data-count>${fmt(st.secs)}</div>
+        <div class="rest-bar" aria-hidden="true"><i data-fill style="width:100%"></i></div>
+        <div class="rest-adj">
+          <button class="pill-btn" data-act="minus15">&minus;15s</button>
+          <button class="pill-btn" data-act="plus15">+15s</button>
+        </div>
+        ${e ? `<div class="upnext">
+          <p class="eyebrow">Up next</p>
+          <h3>${esc(e.name)}</h3>
+          <div class="p-sub">
+            ${nx.sets > 1 ? `<span class="chip">Set ${nx.set} of ${nx.sets}</span>` : ""}
+            ${nx.side ? `<span class="chip side-tag">${nx.side} side</span>` : ""}
+            <span class="chip">${stepDose(nx)}</span>
+          </div>
+        </div>` : ""}
+      </div></div>` + actions("Skip rest", "next");
+    if (e) speak("Rest. Next up, " + (nx.set > 1 ? "set " + nx.set + ". " : e.name + ". ") + (nx.side ? nx.side + " side." : ""));
+    clockStart(st.secs, (left, total) => {
+      const c = P.querySelector("[data-count]"); if (c) c.textContent = fmt(left);
+      const f = P.querySelector("[data-fill]"); if (f) f.style.width = Math.min(100, (left / total) * 100) + "%";
+      if (left > 0 && left <= 3) beep(600, 0.08);
+    }, () => { beep(880, 0.35); buzz([200, 100, 200]); idx++; renderStep(); });
+  }
+
+  function renderEx(st) {
+    const e = EX[st.id], timed = st.unit === "sec", logged = isLogged(st);
+    let logBlock = "";
+    if (logged) {
+      const prev = lastEntry(st.id);
+      const mine = session.lifts[st.id] || [];
+      const lastSet = mine[mine.length - 1];
+      const prevSet = prev ? (prev.sets[st.set - 1] || prev.sets[prev.sets.length - 1]) : null;
+      const w = lastSet ? lastSet.w : prevSet ? prevSet.w : "";
+      const r = st.amt;
+      const step = prefs.unit === "kg" ? 2.5 : 5;
+      logBlock = `
+        ${prev ? `<p class="last">Last time (${esc(prev.d.slice(5).replace("-", "/"))}): <b>${prev.sets.map(x => x.r + " x " + x.w).join(", ")}</b> ${esc(prev.u)}</p>` : `<p class="last">First time logging this. Pick a weight that leaves about 2 reps in the tank.</p>`}
+        <div class="logset">
+          <div class="field">
+            <label for="in-reps">Reps</label>
+            <div class="ctl"><button class="step" data-act="rp-" aria-label="One fewer rep">&minus;</button><input id="in-reps" type="number" inputmode="numeric" min="0" value="${r}"><button class="step" data-act="rp+" aria-label="One more rep">+</button></div>
+          </div>
+          <div class="field">
+            <label for="in-wt"><span>Weight</span><button class="unit-btn" data-act="unit" aria-label="Switch units">${prefs.unit}</button></label>
+            <div class="ctl"><button class="step" data-act="wt-" data-step="${step}" aria-label="Less weight">&minus;</button><input id="in-wt" type="number" inputmode="decimal" min="0" step="${step}" value="${w}" placeholder="0"><button class="step" data-act="wt+" data-step="${step}" aria-label="More weight">+</button></div>
+          </div>
+        </div>`;
+    }
+    const upNext = (() => { for (let j = idx + 1; j < steps.length; j++) if (steps[j].kind === "ex" && steps[j].id !== st.id) return EX[steps[j].id].name; return null; })();
+    P.innerHTML = topBar(st) + `
+      <div class="p-body">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <h2 class="p-name">${esc(e.name)}</h2>
+          <div class="p-sub">
+            ${st.sets > 1 ? `<span class="chip">Set ${st.set} of ${st.sets}</span>` : ""}
+            ${st.side ? `<span class="chip side-tag">${st.side} side</span>` : ""}
+            ${st.note ? `<span class="chip">${esc(st.note)}</span>` : ""}
+          </div>
+        </div>
+        ${mediaHTML(st.id)}
+        <div class="dial" id="dial">
+          <span class="lead" data-lead hidden>Get set</span>
+          <div class="big${timed ? "" : " reps"}" ${timed ? "data-count" : ""}>${timed ? fmt(st.amt) : st.amt}</div>
+          <small>${timed ? "seconds" : "reps"}</small>
+        </div>
+        ${logBlock}
+        ${formHTML(e)}
+        ${upNext ? `<p class="note">After this: ${esc(upNext)}</p>` : ""}
+      </div>` + actions(timed ? "Start" : logged ? "Log set" : "Done, next", timed ? "toggle" : logged ? "log" : "done");
+    const sideTxt = st.side ? st.side + " side. " : "";
+    speak(st.set > 1 || (st.side === "Right") ? (st.set > 1 ? "Set " + st.set + ". " : "") + sideTxt + (timed ? st.amt + " seconds." : "")
+      : e.name + ". " + sideTxt + stepDose(st) + (st.sets > 1 ? ", " + st.sets + " sets." : "."));
+  }
+
+  function runHold(st) {
+    const dial = P.querySelector("#dial"), btn = P.querySelector("#main-btn"), lead = P.querySelector("[data-lead]");
+    hold = "lead"; btn.textContent = "Cancel"; btn.classList.add("pause"); lead.hidden = false;
+    const big = P.querySelector("[data-count]");
+    clockStart(3, left => { if (left > 0) { big.textContent = left; beep(600, 0.08); } }, () => {
+      hold = "run"; lead.hidden = true; btn.textContent = "Pause"; dial.classList.add("running"); beep(880, 0.2); buzz(80);
+      let half = false;
+      clockStart(st.amt, (left, total) => {
+        big.textContent = fmt(left);
+        if (!half && total >= 20 && left === Math.floor(total / 2)) { half = true; speak("Halfway"); }
+        if (left > 0 && left <= 3) beep(600, 0.08);
+      }, () => { beep(880, 0.35); buzz([200, 100, 200]); session.done++; idx++; renderStep(); });
+    });
+  }
+
+  function renderSheet() {
+    const cur = steps[idx] ? steps[idx].item : routine.items.length;
+    const rows = routine.items.map((it, i) => {
+      const lastIdx = steps.map(s => s.item).lastIndexOf(i);
+      const state = i === cur ? "cur" : idx > lastIdx ? "done" : "";
+      return `<button class="jump ${state}" data-jump="${i}"><span class="st">${state === "done" ? icons2.tick : ""}</span><span>${esc(EX[it[0]].name)}</span><small>${doseText(it)}</small></button>`;
+    }).join("");
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<div class="sheet-backdrop" data-act="sheet-close"></div><div class="sheet" role="dialog" aria-label="Exercises in this routine"><p class="eyebrow">Jump to</p>${rows}</div>`;
+    wrap.dataset.sheet = "1";
+    P.appendChild(wrap);
+  }
+
+  function renderFinish() {
+    clockStop();
+    const k = dkey(new Date());
+    log[k] = (log[k] || []).concat(routine.id); saveLog(log);
+    const mins = Math.max(1, Math.round((Date.now() - session.start) / 60000));
+    const stats = [[mins, "minutes"], [session.done, "steps done"]];
+    if (session.sets) stats.push([session.sets, "sets logged"]);
+    if (session.volume) stats.push([Math.round(session.volume).toLocaleString(), prefs.unit + " moved"]);
+    P.innerHTML = topBar(null) + `
+      <div class="p-body"><div class="finish">
+        <div class="check">${icon.check}</div>
+        <h2>Done</h2>
+        <div class="stats">${stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join("")}</div>
+        <p>${esc(routine.name)} is logged for today. ${routine.id === "desk" ? "Do it again in an hour or so." : "Stand up and walk for a minute."}</p>
+        <button class="btn btn-primary" data-act="close">Back to today</button>
+      </div></div>`;
+    P.querySelector(".progress i").style.width = "100%";
+    beep(660, 0.2); setTimeout(() => beep(990, 0.3), 220); speak("Workout complete. Nice work.");
+    idx = steps.length + 1;
+  }
+
+  function logSet() {
+    const st = steps[idx];
+    const r = parseInt(P.querySelector("#in-reps").value, 10) || 0;
+    const w = parseFloat(P.querySelector("#in-wt").value) || 0;
+    const list = (session.lifts[st.id] = session.lifts[st.id] || []);
+    list.push({ r, w });
+    session.sets++; session.done++; session.volume += r * w;
+    lifts[st.id] = (lifts[st.id] || []).filter(x => x.s !== session.start)
+      .concat({ s: session.start, d: dkey(new Date()), u: prefs.unit, sets: list.slice() }).slice(-12);
+    saveJSON(LKEY, lifts);
+    buzz(60); idx++; renderStep();
+  }
+
+  function toast(text) {
+    const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = text;
+    P.appendChild(t); setTimeout(() => t.remove(), 2500);
+  }
+
+  P.addEventListener("click", e => {
+    const j = e.target.closest("[data-jump]");
+    if (j) { clockStop(); idx = firstStepOf(+j.dataset.jump); return renderStep(); }
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act, st = steps[idx];
+    switch (act) {
+      case "close":
+        if (idx > 0 && idx < steps.length && Date.now() - closeArmed > 2500) { closeArmed = Date.now(); return toast("Tap X again to end the workout"); }
+        return closePlayer();
+      case "voice":
+        prefs.voice = !prefs.voice; saveJSON(PKEY, prefs);
+        if (!prefs.voice) { try { speechSynthesis.cancel(); } catch (err) {} }
+        b.setAttribute("aria-pressed", String(prefs.voice)); b.setAttribute("aria-label", "Voice cues " + (prefs.voice ? "on" : "off"));
+        b.innerHTML = prefs.voice ? icons2.voiceOn : icons2.voiceOff; return;
+      case "list": return renderSheet();
+      case "sheet-close": { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); return; }
+      case "prev": clockStop(); idx = Math.max(0, idx - 1); if (steps[idx].kind === "rest" && idx > 0) idx--; return renderStep();
+      case "next": clockStop(); idx++; return renderStep();
+      case "done": session.done++; idx++; return renderStep();
+      case "log": return logSet();
+      case "minus15": return clockAdd(-15);
+      case "plus15": return clockAdd(15);
+      case "rp-": case "rp+": { const i = P.querySelector("#in-reps"); i.value = Math.max(0, (parseInt(i.value, 10) || 0) + (act === "rp+" ? 1 : -1)); return; }
+      case "wt-": case "wt+": { const i = P.querySelector("#in-wt"), s = +b.dataset.step; i.value = Math.max(0, (parseFloat(i.value) || 0) + (act === "wt+" ? s : -s)); return; }
+      case "unit": prefs.unit = prefs.unit === "lb" ? "kg" : "lb"; saveJSON(PKEY, prefs); return renderEx(st);
+      case "toggle": {
+        beep(520, 0.05);
+        const dial = P.querySelector("#dial");
+        if (hold === "idle") return runHold(st);
+        if (hold === "lead") { clockStop(); return renderEx(st); }
+        if (hold === "run") { clockPause(); hold = "paused"; b.textContent = "Resume"; b.classList.remove("pause"); dial.classList.remove("running"); return; }
+        if (hold === "paused") { clockResume(); hold = "run"; b.textContent = "Pause"; b.classList.add("pause"); dial.classList.add("running"); return; }
+      }
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => { if (!P.hidden && document.visibilityState === "visible") lockScreen(); });
+  document.addEventListener("keydown", e => {
+    if (P.hidden) return;
+    if (e.key === "Escape") { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); else closePlayer(); }
+  });
+
+  // ---------- Boot ----------
+  renderToday(); renderLibrary(); renderPlan();
+  let startView = "today";
+  try { startView = sessionStorage.getItem("pr-view") || "today"; } catch (e) {}
+  if (views.includes(startView) && startView !== "today") showView(startView);
+
+  // Offline support
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+})();
+</script>
+</body>
+</html>
