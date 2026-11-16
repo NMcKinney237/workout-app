@@ -159,7 +159,7 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px));
 }
-.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); height: var(--tabbar-h); }
+.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--tabbar-h); }
 .tab { background: none; border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 12px; font-weight: 600; color: var(--muted); }
 .tab svg { width: 22px; height: 22px; }
 .tab[aria-selected="true"] { color: var(--spruce); }
@@ -207,6 +207,30 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
 .finish h2 { font-size: 34px; font-weight: 800; }
 .finish p { margin: 0; color: var(--muted); max-width: 32ch; }
 .check { width: 84px; height: 84px; border-radius: 50%; background: var(--spruce-soft); color: var(--spruce); display: grid; place-items: center; }
+
+/* progress */
+.statrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.statrow div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.statrow b { font-family: var(--f-mono); font-size: 26px; font-variant-numeric: tabular-nums; }
+.statrow span { font-size: 12px; color: var(--muted); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
+.cal-cell { aspect-ratio: 1; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; position: relative; font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+.cal-cell.empty { background: none; }
+.cal-cell.on { background: var(--spruce); color: var(--on-accent); font-weight: 600; }
+.cal-cell.today { box-shadow: inset 0 0 0 2px var(--ochre); }
+.cal-cell small { position: absolute; right: 3px; top: 1px; font-size: 9px; }
+.lift { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding-block: 10px; border-top: 1px solid var(--line); }
+.lift:first-of-type { border-top: 0; }
+.lift h3 { font-size: 16px; font-weight: 700; }
+.lift p { margin: 0; font-size: 13px; color: var(--muted); }
+.lift p b { color: var(--ink); font-family: var(--f-mono); font-weight: 600; }
+.spark { width: 120px; height: 32px; }
+.spark polyline { fill: none; stroke: var(--spruce); stroke-width: 2; stroke-linejoin: round; }
+.spark circle { fill: var(--ochre); }
+.row-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+label.btn { display: inline-flex; align-items: center; cursor: pointer; }
+.dial[data-act] { cursor: pointer; }
 
 /* player extras */
 .player { position: fixed; }
@@ -284,6 +308,7 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
   <section class="view" id="view-today" aria-labelledby="h-today"></section>
   <section class="view" id="view-library" aria-labelledby="h-lib" hidden></section>
   <section class="view" id="view-plan" aria-labelledby="h-plan" hidden></section>
+  <section class="view" id="view-progress" aria-labelledby="h-progress" hidden></section>
 </div>
 
 <div class="tabbar">
@@ -296,6 +321,9 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
     </button>
     <button class="tab" role="tab" id="tab-plan" aria-selected="false" data-view="plan">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Plan
+    </button>
+    <button class="tab" role="tab" id="tab-progress" aria-selected="false" data-view="progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16M7 15l4-4 3 3 5-6"/></svg>Progress
     </button>
   </nav>
 </div>
@@ -980,13 +1008,14 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
   }
 
   // ---------- Tabs ----------
-  const views = ["today", "library", "plan"];
+  const views = ["today", "library", "plan", "progress"];
   function showView(v) {
     views.forEach(n => {
       document.getElementById("view-" + n).hidden = n !== v;
       document.getElementById("tab-" + n).setAttribute("aria-selected", String(n === v));
     });
     if (v === "today") renderToday();
+    if (v === "progress") renderProgress();
     window.scrollTo(0, 0);
     try { sessionStorage.setItem("pr-view", v); } catch (e) {}
   }
@@ -1186,7 +1215,7 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
           </div>
         </div>
         ${mediaHTML(st.id)}
-        <div class="dial" id="dial">
+        <div class="dial" id="dial"${timed ? ' data-act="toggle" role="button" tabindex="0" aria-label="Tap to start or pause the timer"' : ""}>
           <span class="lead" data-lead hidden>Get set</span>
           <div class="big${timed ? "" : " reps"}" ${timed ? "data-count" : ""}>${timed ? fmt(st.amt) : st.amt}</div>
           <small>${timed ? "seconds" : "reps"}</small>
@@ -1195,6 +1224,9 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
         ${formHTML(e)}
         ${upNext ? `<p class="note">After this: ${esc(upNext)}</p>` : ""}
       </div>` + actions(timed ? "Start" : logged ? "Log set" : "Done, next", timed ? "toggle" : logged ? "log" : "done");
+    for (let j = idx + 1; j < steps.length; j++) {
+      if (steps[j].kind === "ex" && steps[j].id !== st.id) { const ph = PHOTO[steps[j].id]; if (ph) { new Image().src = "img/" + ph[0] + "_0.jpg"; new Image().src = "img/" + ph[0] + "_1.jpg"; } break; }
+    }
     const sideTxt = st.side ? st.side + " side. " : "";
     speak(st.set > 1 || (st.side === "Right") ? (st.set > 1 ? "Set " + st.set + ". " : "") + sideTxt + (timed ? st.amt + " seconds." : "")
       : e.name + ". " + sideTxt + stepDose(st) + (st.sets > 1 ? ", " + st.sets + " sets." : "."));
@@ -1294,11 +1326,11 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
       case "unit": prefs.unit = prefs.unit === "lb" ? "kg" : "lb"; saveJSON(PKEY, prefs); return renderEx(st);
       case "toggle": {
         beep(520, 0.05);
-        const dial = P.querySelector("#dial");
+        const dial = P.querySelector("#dial"), mb = P.querySelector("#main-btn");
         if (hold === "idle") return runHold(st);
         if (hold === "lead") { clockStop(); return renderEx(st); }
-        if (hold === "run") { clockPause(); hold = "paused"; b.textContent = "Resume"; b.classList.remove("pause"); dial.classList.remove("running"); return; }
-        if (hold === "paused") { clockResume(); hold = "run"; b.textContent = "Pause"; b.classList.add("pause"); dial.classList.add("running"); return; }
+        if (hold === "run") { clockPause(); hold = "paused"; mb.textContent = "Resume"; mb.classList.remove("pause"); dial.classList.remove("running"); return; }
+        if (hold === "paused") { clockResume(); hold = "run"; mb.textContent = "Pause"; mb.classList.add("pause"); dial.classList.add("running"); return; }
       }
     }
   });
@@ -1309,8 +1341,114 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
     if (e.key === "Escape") { const s = P.querySelector("[data-sheet]"); if (s) s.remove(); else closePlayer(); }
   });
 
+  // ---------- Progress ----------
+  function streakDays() {
+    const d = new Date(); let n = 0;
+    if (!(log[dkey(d)] || []).length) d.setDate(d.getDate() - 1);
+    while ((log[dkey(d)] || []).length) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  function countSince(days) {
+    let n = 0; const d = new Date();
+    for (let i = 0; i < days; i++) { n += (log[dkey(d)] || []).length; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  function sparkline(vals) {
+    if (vals.length < 2) return "";
+    const W = 120, H = 32, lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
+    const pts = vals.map((v, i) => [4 + (i * (W - 8)) / (vals.length - 1), H - 5 - ((v - lo) / span) * (H - 10)]);
+    const line = pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+    const last = pts[pts.length - 1];
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${line}"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3"/></svg>`;
+  }
+  function renderProgress() {
+    const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+    const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), offset = (first.getDay() + 6) % 7;
+    let cells = "";
+    for (let i = 0; i < offset; i++) cells += '<div class="cal-cell empty"></div>';
+    for (let d = 1; d <= days; d++) {
+      const k = dkey(new Date(y, m, d)), list = log[k] || [];
+      const isToday = d === now.getDate();
+      const title = list.length ? list.map(id => R[id] ? R[id].name : id).join(", ") : "No sessions";
+      cells += `<div class="cal-cell${list.length ? " on" : ""}${isToday ? " today" : ""}" title="${esc(title)}" aria-label="${d}: ${esc(title)}"><span>${d}</span>${list.length > 1 ? `<small>${list.length}</small>` : ""}</div>`;
+    }
+    const liftRows = Object.entries(lifts).filter(([id, h]) => EX[id] && h.length).map(([id, h]) => {
+      const tops = h.map(x => Math.max(0, ...x.sets.map(s => s.w)));
+      const last = h[h.length - 1];
+      let best = null;
+      h.forEach(x => x.sets.forEach(s => { if (!best || s.w > best.w || (s.w === best.w && s.r > best.r)) best = Object.assign({ u: x.u }, s); }));
+      return `<div class="lift">
+        <div class="lift-main"><h3>${esc(EX[id].name)}</h3>
+          <p>Last (${esc(last.d.slice(5).replace("-", "/"))}): <b>${last.sets.map(s => s.r + " x " + s.w).join(", ")}</b> ${esc(last.u)}</p>
+          <p>Best set: <b>${best.r} x ${best.w}</b> ${esc(best.u)} &middot; ${h.length} session${h.length > 1 ? "s" : ""}</p>
+        </div>${sparkline(tops)}</div>`;
+    }).join("");
+    document.getElementById("view-progress").innerHTML = `
+      <header class="hdr">
+        <p class="eyebrow">Saved on this phone</p>
+        <h1 id="h-progress">Progress</h1>
+      </header>
+      <div class="statrow">
+        <div><b>${streakDays()}</b><span>day streak</span></div>
+        <div><b>${countSince(7)}</b><span>sessions, 7 days</span></div>
+        <div><b>${countSince(30)}</b><span>sessions, 30 days</span></div>
+      </div>
+      <div class="card">
+        <h2>${now.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
+        <div class="cal">${["M", "T", "W", "T", "F", "S", "S"].map(d => `<div class="cal-head">${d}</div>`).join("")}${cells}</div>
+      </div>
+      <div class="card">
+        <h2>Lifts</h2>
+        ${liftRows || '<p class="note">Lifts you log in Gym A and Gym B show up here with your last session, best set and a weight trend.</p>'}
+      </div>
+      <div class="card">
+        <h2>Backup</h2>
+        <p class="note">Your history lives only on this phone. Save a backup now and then, and restore it if you switch phones or clear Safari data.</p>
+        <div class="row-btns">
+          <button class="btn btn-primary" data-backup="export">Save backup</button>
+          <label class="btn btn-ghost" for="import-file">Restore backup</label>
+          <input id="import-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="note" id="backup-msg" role="status"></p>
+      </div>`;
+  }
+  async function exportBackup() {
+    const data = JSON.stringify({ app: "workout-app", version: 1, exported: new Date().toISOString(), log, lifts, prefs }, null, 1);
+    const name = "workout-backup-" + dkey(new Date()) + ".json";
+    const msg = document.getElementById("backup-msg");
+    try {
+      const file = new File([data], name, { type: "application/json" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); msg.textContent = "Backup ready. Save it to Files or iCloud Drive."; return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    msg.textContent = "Backup saved as " + name + ".";
+  }
+  function importBackup(file) {
+    const msg = document.getElementById("backup-msg");
+    file.text().then(txt => {
+      const d = JSON.parse(txt);
+      if (!d || d.app !== "workout-app") throw new Error("not ours");
+      Object.entries(d.log || {}).forEach(([k, v]) => { if (!log[k] || v.length > log[k].length) log[k] = v; });
+      Object.entries(d.lifts || {}).forEach(([id, h]) => {
+        const have = new Set((lifts[id] || []).map(x => x.s));
+        lifts[id] = (lifts[id] || []).concat(h.filter(x => !have.has(x.s))).sort((a, b) => a.s - b.s).slice(-24);
+      });
+      saveLog(log); saveJSON(LKEY, lifts);
+      renderProgress(); document.getElementById("backup-msg").textContent = "Backup restored and merged with what was here.";
+    }).catch(() => { msg.textContent = "That file isn't a backup from this app. Pick a workout-backup .json file."; });
+  }
+  document.getElementById("view-progress").addEventListener("click", e => {
+    if (e.target.closest('[data-backup="export"]')) exportBackup();
+  });
+  document.getElementById("view-progress").addEventListener("change", e => {
+    if (e.target.id === "import-file" && e.target.files[0]) importBackup(e.target.files[0]);
+  });
+
   // ---------- Boot ----------
   renderToday(); renderLibrary(); renderPlan();
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
   let startView = "today";
   try { startView = sessionStorage.getItem("pr-view") || "today"; } catch (e) {}
   if (views.includes(startView) && startView !== "today") showView(startView);
