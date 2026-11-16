@@ -307,6 +307,21 @@ details.ex[open] summary .plus { transform: rotate(45deg); }
 .cal-cell.pro::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 4px; height: 3px; border-radius: 2px; background: var(--ochre); }
 .cal-cell[data-day] { cursor: pointer; }
 
+/* today progress card */
+.today-card { gap: 14px; }
+.rings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini { display: grid; place-items: center; background: none; border: 0; padding: 0; }
+.mini .ring-wrap, .mini .ring { width: 112px; height: 112px; }
+.mini .ring-num b { font-size: 24px; }
+.goals-list { display: flex; flex-direction: column; }
+.goal-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 10px 2px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; font-weight: 600; }
+.goal-row:first-child { border-top: 0; }
+.goal-row .st { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
+.goal-row.done .st { background: var(--spruce); border-color: var(--spruce); color: var(--on-accent); }
+.goal-row.done .gname { color: var(--muted); }
+.gcount { font-family: var(--f-mono); font-size: 13px; color: var(--spruce); }
+.wk { display: flex; flex-direction: column; gap: 6px; }
+
 /* progress */
 .statrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .statrow div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -1062,6 +1077,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
         <p>For long days at a desk. Targets forward pelvic tilt and forward head posture.</p>
       </header>
       <div class="week" aria-label="This week">${strip}</div>
+      ${todayCard()}
       <div class="suggest">
         <p class="eyebrow">Today's plan</p>
         <h2>${esc(plan.label)}</h2>
@@ -1071,7 +1087,6 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
           <button class="btn btn-light" data-start="desk" style="background:transparent;color:inherit;border:1.5px solid currentColor">Desk Reset</button>
         </div>
       </div>
-      ${proteinTodayCard()}
       <div class="list" role="list">
         <p class="eyebrow">All routines</p>
         ${ROUTINES.map(r => {
@@ -1085,13 +1100,48 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
       </div>`;
   }
 
-  function proteinTodayCard() {
+  // Daily routine goals: the day's main routine, plus 3 Desk Resets on weekdays. Home A/B count for Gym A/B.
+  const SWAPS = { "gym-a": ["strength-a"], "gym-b": ["strength-b"] };
+  function dayGoals(d) {
+    const dow = d.getDay(), plan = WEEK[dow], list = log[dkey(d)] || [];
+    const count = id => list.filter(x => x === id || (SWAPS[id] || []).includes(x)).length;
+    const goals = [{ id: plan.main, name: R[plan.main].name.split(":")[0], need: 1 }];
+    if (dow >= 1 && dow <= 5) goals.push({ id: "desk", name: "Desk Reset", need: 3 });
+    goals.forEach(g => { g.got = count(g.id); g.done = Math.min(g.got, g.need); });
+    return { goals, done: goals.reduce((a, g) => a + g.done, 0), total: goals.reduce((a, g) => a + g.need, 0) };
+  }
+  function weekGym() {
+    const now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    let got = 0;
+    for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); got += (log[dkey(d)] || []).filter(x => /^(gym-|strength-)/.test(x)).length; }
+    return { got, need: 4 };
+  }
+  function todayCard() {
     if (!nutReady) return "";
-    const t = targets();
-    if (!t) return `<button class="card pt-card" data-goto="fuel"><div><p class="eyebrow">Nutrition</p><b>Set your protein target</b></div><span class="go">${icon.play}</span></button>`;
-    const got = Math.round(dayTotals(dkey(new Date())).p);
-    return `<button class="card pt-card" data-goto="fuel"><div><p class="eyebrow">Protein today</p><b>${got} / ${t.protein} g</b>
-      <div class="kbar"><i style="width:${Math.min(100, got / t.protein * 100).toFixed(0)}%"></i></div></div><span class="go">+</span></button>`;
+    const g = dayGoals(new Date()), t = targets(), wk = weekGym();
+    const pro = t ? Math.round(dayTotals(dkey(new Date())).p) : 0;
+    const check = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    return `<div class="card today-card">
+      <div class="rings">
+        <div class="mini" aria-label="Routines: ${g.done} of ${g.total} done">
+          <div class="ring-wrap">${ring(g.done, g.total)}<div class="ring-num"><b>${g.done}/${g.total}</b><span>routines</span></div></div>
+        </div>
+        <button class="mini" data-goto="fuel" aria-label="${t ? `Protein: ${pro} of ${t.protein} grams` : "Set your protein target"}">
+          <div class="ring-wrap">${ring(pro, t ? t.protein : 1)}<div class="ring-num">${t ? `<b>${pro}</b><span>of ${t.protein} g</span>` : `<b>+</b><span>set protein</span>`}</div></div>
+        </button>
+      </div>
+      <div class="goals-list">
+        ${g.goals.map(x => `<button class="goal-row${x.done >= x.need ? " done" : ""}" data-start="${x.id}">
+          <span class="st">${x.done >= x.need ? check : ""}</span>
+          <span class="gname">${esc(x.name)}</span>
+          <span class="gcount">${x.need > 1 ? `${x.done} / ${x.need}` : x.done ? "Done" : "Start"}</span>
+        </button>`).join("")}
+      </div>
+      <div class="wk">
+        <div class="kcal"><span>Gym sessions this week</span><b>${wk.got} / ${wk.need}</b></div>
+        <div class="kbar"><i style="width:${Math.min(100, wk.got / wk.need * 100).toFixed(0)}%"></i></div>
+      </div>
+    </div>`;
   }
 
   // ---------- Library ----------
@@ -1591,7 +1641,7 @@ label.btn { display: inline-flex; align-items: center; cursor: pointer; }
     const r = 52, c = 2 * Math.PI * r, frac = Math.min(1, target ? val / target : 0);
     return `<svg class="ring" viewBox="0 0 128 128" aria-hidden="true">
       <circle cx="64" cy="64" r="${r}" class="ring-bg"/>
-      <circle cx="64" cy="64" r="${r}" class="ring-fg${frac >= 1 ? " hit" : ""}" stroke-dasharray="${(c * frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 64 64)"/>
+      ${frac > 0 ? `<circle cx="64" cy="64" r="${r}" class="ring-fg${frac >= 1 ? " hit" : ""}" stroke-dasharray="${(c * frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 64 64)"/>` : ""}
     </svg>`;
   }
   function weekChart(t) {
